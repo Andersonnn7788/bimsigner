@@ -54,7 +54,7 @@ export function useLandmarkBuffer() {
           };
           setLastDetection(detection);
 
-          if (res.confidence >= CONFIDENCE_THRESHOLD) {
+          if (res.confidence >= CONFIDENCE_THRESHOLD && res.sign !== "Idle") {
             setGlosses((prev) => {
               // Deduplicate: only append if different from last
               if (prev.length === 0 || prev[prev.length - 1] !== res.sign) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
 
 interface Props {
   signs: string[];
@@ -50,7 +51,7 @@ export default function AvatarPlayer({ signs, onDone }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-800">
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-secondary shadow-sm">
         <video
           ref={videoRef}
           className="h-full w-full object-contain"
@@ -59,14 +60,17 @@ export default function AvatarPlayer({ signs, onDone }: Props) {
           onError={handleNext}
         />
         {!isPlaying && signs.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-white/40">
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             Avatar signs will play here
           </div>
         )}
       </div>
       {currentSign && (
-        <div className="text-sm font-medium text-white/70">
-          Signing: <span className="text-emerald-400">{currentSign}</span>
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          Signing:{" "}
+          <Badge variant="outline" className="text-primary border-primary/30">
+            {currentSign}
+          </Badge>
         </div>
       )}
     </div>

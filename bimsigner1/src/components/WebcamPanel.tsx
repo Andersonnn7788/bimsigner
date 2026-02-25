@@ -4,6 +4,7 @@ import type { DetectionResult, Landmark } from "@/types";
 import DetectionOverlay from "./DetectionOverlay";
 import ConfidenceDisplay from "./ConfidenceDisplay";
 import GlossBar from "./GlossBar";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -41,9 +42,9 @@ export default function WebcamPanel({
   onStart,
 }: Props) {
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex min-h-0 h-full flex-col gap-3">
       {/* Video container */}
-      <div className="relative flex-1 overflow-hidden rounded-xl bg-gray-900">
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-secondary shadow-sm">
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
@@ -65,26 +66,47 @@ export default function WebcamPanel({
 
         {/* Status overlays */}
         {!isWebcamReady && !webcamError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-900">
-            <div className="text-6xl">📷</div>
-            <button
-              onClick={onStart}
-              className="rounded-lg bg-emerald-500 px-6 py-3 text-lg font-semibold text-white transition-colors hover:bg-emerald-600"
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-secondary">
+            <svg
+              className="h-12 w-12 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15 10l4.553-2.069A1 1 0 0121 8.882v6.236a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"
+              />
+            </svg>
+            <Button onClick={onStart} size="lg">
               Start Camera
-            </button>
+            </Button>
           </div>
         )}
 
         {webcamError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gray-900 p-4 text-center">
-            <div className="text-4xl">⚠</div>
-            <p className="text-sm text-red-400">{webcamError}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-secondary p-4 text-center">
+            <svg
+              className="h-10 w-10 text-destructive"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              />
+            </svg>
+            <p className="text-sm text-destructive">{webcamError}</p>
           </div>
         )}
 
         {isMediaPipeLoading && (
-          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-md bg-yellow-500/80 px-3 py-1.5 text-sm font-medium text-white">
+          <div className="absolute left-3 top-3 flex items-center gap-2 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-700">
             <svg
               className="h-4 w-4 animate-spin"
               viewBox="0 0 24 24"

@@ -136,16 +136,16 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col bg-gray-950 p-3 text-white">
+    <div className="flex h-screen flex-col bg-background">
       {/* Header */}
-      <header className="mb-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-tight">
-          <span className="text-emerald-400">BIM</span> Signer
+      <header className="flex items-center justify-between border-b border-border bg-card px-6 py-3 shadow-sm">
+        <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <span className="text-primary">BIM</span> Signer
         </h1>
-        <div className="flex items-center gap-2 text-xs text-white/50">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {mediapipe.isReady && (
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-primary" />
               MediaPipe Ready
             </span>
           )}
@@ -156,14 +156,14 @@ export default function Home() {
       {typeof window !== "undefined" &&
         !("webkitSpeechRecognition" in window) &&
         !("SpeechRecognition" in window) && (
-          <div className="mb-2 rounded-md bg-yellow-500/20 px-3 py-2 text-xs text-yellow-300">
+          <div className="mx-4 mt-3 rounded-md border border-yellow-200 bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
             Speech recognition requires Chrome. Some features may not work in
             this browser.
           </div>
         )}
 
       {/* Split screen */}
-      <div className="grid flex-1 grid-cols-2 gap-3 overflow-hidden">
+      <div className="grid min-h-0 flex-1 grid-cols-2 gap-4 overflow-hidden p-4">
         {/* Left: Webcam */}
         <WebcamPanel
           videoRef={webcam.videoRef}

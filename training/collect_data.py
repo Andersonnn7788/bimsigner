@@ -13,9 +13,15 @@ from config import ACTIONS, NO_SEQUENCES, SEQUENCE_LENGTH, DATA_PATH
 from utils import mediapipe_detection, draw_styled_landmarks, extract_keypoints
 
 # ---------------------------------------------------------------------------
+# Choose which actions to collect (set to None to collect all)
+# ---------------------------------------------------------------------------
+COLLECT_ONLY = ["Idle"]  # Set to None to collect all actions
+collect_actions = [a for a in ACTIONS if a in COLLECT_ONLY] if COLLECT_ONLY else ACTIONS
+
+# ---------------------------------------------------------------------------
 # Create folder structure: MP_Data/{action}/{sequence_number}/
 # ---------------------------------------------------------------------------
-for action in ACTIONS:
+for action in collect_actions:
     for sequence in range(NO_SEQUENCES):
         os.makedirs(os.path.join(DATA_PATH, action, str(sequence)), exist_ok=True)
 
@@ -27,7 +33,7 @@ start_folder = 0  # Starting sequence index (set to 0 for fresh collection)
 cap = cv2.VideoCapture(0)
 
 with mp.solutions.holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-    for action in ACTIONS:
+    for action in collect_actions:
         for sequence in range(start_folder, start_folder + NO_SEQUENCES):
             for frame_num in range(SEQUENCE_LENGTH):
 
@@ -65,4 +71,4 @@ cap.release()
 cv2.destroyAllWindows()
 print("Data collection complete!")
 print(f"Saved to: {DATA_PATH}")
-print(f"Actions: {list(ACTIONS)}, Sequences: {NO_SEQUENCES}, Frames/seq: {SEQUENCE_LENGTH}")
+print(f"Actions: {list(collect_actions)}, Sequences: {NO_SEQUENCES}, Frames/seq: {SEQUENCE_LENGTH}")

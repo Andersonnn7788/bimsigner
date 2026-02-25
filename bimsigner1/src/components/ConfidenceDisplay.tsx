@@ -9,8 +9,8 @@ interface Props {
 
 export default function ConfidenceDisplay({ detection }: Props) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg bg-black/60 p-3 backdrop-blur-sm">
-      <div className="mb-1 text-xs font-medium uppercase tracking-wider text-white/70">
+    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-white/90 p-3 shadow-sm backdrop-blur-sm">
+      <div className="panel-title" style={{ color: "hsl(215 16% 47%)" }}>
         Detection
       </div>
       {ACTION_LABELS.map((label) => {
@@ -21,20 +21,23 @@ export default function ConfidenceDisplay({ detection }: Props) {
 
         return (
           <div key={label} className="flex items-center gap-2">
-            <span className="w-14 text-xs font-medium text-white">
+            <span className="w-14 text-xs font-medium text-foreground">
               {label}
             </span>
-            <div className="h-3 flex-1 overflow-hidden rounded-full bg-white/20">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary border border-border">
               <div
                 className="h-full rounded-full transition-all duration-200"
                 style={{
                   width: `${confidence * 100}%`,
-                  backgroundColor:
-                    aboveThreshold ? "#22c55e" : isActive ? "#eab308" : "#6b7280",
+                  backgroundColor: aboveThreshold
+                    ? "hsl(221 83% 53%)"
+                    : isActive
+                      ? "#eab308"
+                      : "#94a3b8",
                 }}
               />
             </div>
-            <span className="w-10 text-right font-mono text-xs text-white/80">
+            <span className="w-10 text-right font-mono text-xs text-muted-foreground">
               {isActive ? `${(confidence * 100).toFixed(0)}%` : "—"}
             </span>
           </div>

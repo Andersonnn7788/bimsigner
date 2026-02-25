@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 # Actions must match backend/services/model_service.py ACTIONS list (same order)
-ACTIONS = np.array(["Encik", "Tolong", "Saya"])
+ACTIONS = np.array(["Idle", "Encik", "Tolong", "Saya"])
 
 # Data collection parameters
 NO_SEQUENCES = 30       # Number of video sequences per action

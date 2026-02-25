@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
 interface Props {
   glosses: string[];
   sentence: string;
@@ -16,49 +19,45 @@ export default function GlossBar({
   isSpeaking,
 }: Props) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-black/60 p-3 backdrop-blur-sm">
-      <div className="text-xs font-medium uppercase tracking-wider text-white/70">
-        Detected Signs
-      </div>
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 shadow-sm">
+      <div className="panel-title">Detected Signs</div>
 
       <div className="flex min-h-[2rem] flex-wrap gap-1.5">
         {glosses.length === 0 ? (
-          <span className="text-sm text-white/40">
+          <span className="text-sm text-muted-foreground">
             Perform signs to detect...
           </span>
         ) : (
           glosses.map((g, i) => (
-            <span
-              key={`${g}-${i}`}
-              className="rounded-md bg-emerald-500/80 px-2.5 py-1 text-sm font-medium text-white"
-            >
+            <Badge key={`${g}-${i}`} variant="secondary">
               {g}
-            </span>
+            </Badge>
           ))
         )}
       </div>
 
       {sentence && (
-        <div className="rounded-md bg-white/10 px-3 py-2 text-sm text-white">
+        <div className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground">
           {sentence}
         </div>
       )}
 
       <div className="flex gap-2">
-        <button
+        <Button
+          size="sm"
           onClick={onSpeak}
           disabled={glosses.length === 0 || isSpeaking}
-          className="rounded-md bg-blue-500 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-600 disabled:opacity-40"
         >
           {isSpeaking ? "Speaking..." : "Speak"}
-        </button>
-        <button
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
           onClick={onClear}
           disabled={glosses.length === 0}
-          className="rounded-md bg-white/20 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/30 disabled:opacity-40"
         >
           Clear
-        </button>
+        </Button>
       </div>
     </div>
   );
