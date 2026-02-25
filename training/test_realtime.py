@@ -18,7 +18,7 @@ from utils import mediapipe_detection, draw_styled_landmarks, extract_keypoints
 model = load_model(MODEL_PATH)
 print(f"Model loaded from: {MODEL_PATH}")
 
-colors = [(245, 117, 16), (117, 245, 16), (16, 117, 245)]
+colors = [(128, 128, 128), (245, 117, 16), (117, 245, 16), (16, 117, 245)]
 threshold = 0.5
 
 
@@ -51,17 +51,18 @@ with mp.solutions.holistic.Holistic(min_detection_confidence=0.5, min_tracking_c
         draw_styled_landmarks(image, results)
 
         keypoints = extract_keypoints(results)
+        keypoints[132:1536] = 0.0  # Zero face landmarks (must match training mask)
         sequence.append(keypoints)
         sequence = sequence[-SEQUENCE_LENGTH:]
 
         if len(sequence) == SEQUENCE_LENGTH:
-            res = model.predict(np.expand_dims(sequence, axis=0))[0]
+            res = model(np.expand_dims(sequence, axis=0), training=False)[0].numpy()
             predictions.append(np.argmax(res))
 
             # Temporal smoothing: require 10 consecutive same predictions
             if len(predictions) >= 10 and np.unique(predictions[-10:])[0] == np.argmax(res):
                 if res[np.argmax(res)] > threshold:
-                    if len(sentence) == 0 or ACTIONS[np.argmax(res)] != sentence[-1]:
+                    if ACTIONS[np.argmax(res)] != "Idle" and (len(sentence) == 0 or ACTIONS[np.argmax(res)] != sentence[-1]):
                         sentence.append(ACTIONS[np.argmax(res)])
 
             if len(sentence) > 5:

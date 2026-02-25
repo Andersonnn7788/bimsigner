@@ -4,7 +4,7 @@ import tensorflow as tf
 from config import settings
 
 # Order must match training/config.py ACTIONS list
-ACTIONS = ["Encik", "Tolong", "Saya"]
+ACTIONS = ["Idle", "Encik", "Tolong", "Saya"]
 
 _model: tf.keras.Model | None = None
 
@@ -24,6 +24,7 @@ def predict(landmarks: list[list[float]]) -> tuple[str, float, int]:
         raise RuntimeError("Model not loaded")
 
     sequence = np.array(landmarks, dtype=np.float32).reshape(1, 30, 1662)
+    sequence[:, :, 132:1536] = 0.0  # Zero face landmarks (must match training mask)
     prediction = _model.predict(sequence, verbose=0)[0]
     action_index = int(np.argmax(prediction))
     confidence = float(prediction[action_index])
