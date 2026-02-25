@@ -3,6 +3,7 @@ import tensorflow as tf
 
 from config import settings
 
+# Order must match training/config.py ACTIONS list
 ACTIONS = ["Encik", "Tolong", "Saya"]
 
 _model: tf.keras.Model | None = None

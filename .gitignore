@@ -43,6 +43,8 @@ __pycache__/
 # ─── Data / dataset folders (add specific paths if needed) ──
 data/
 datasets/
+MP_Data/
+Logs/
 *.csv
 *.npy
 *.npz
