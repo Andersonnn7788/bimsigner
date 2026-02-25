@@ -1,6 +1,6 @@
 "use client";
 
-import { ACTION_LABELS, CONFIDENCE_THRESHOLD } from "@/lib/constants";
+import { CONFIDENCE_THRESHOLD } from "@/lib/constants";
 import type { DetectionResult } from "@/types";
 
 interface Props {
@@ -8,41 +8,90 @@ interface Props {
 }
 
 export default function ConfidenceDisplay({ detection }: Props) {
-  return (
-    <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-white/90 p-3 shadow-sm backdrop-blur-sm">
-      <div className="panel-title" style={{ color: "hsl(215 16% 47%)" }}>
-        Detection
-      </div>
-      {ACTION_LABELS.map((label) => {
-        const isActive = detection?.sign === label;
-        const confidence =
-          isActive && detection ? detection.confidence : 0;
-        const aboveThreshold = confidence >= CONFIDENCE_THRESHOLD;
+  const confidence = detection?.confidence ?? 0;
+  const aboveThreshold = confidence >= CONFIDENCE_THRESHOLD;
+  const barWidth = `${(confidence * 100).toFixed(1)}%`;
+  const barColor = aboveThreshold
+    ? "#00ff88"
+    : confidence > 0.3
+    ? "#facc15"
+    : "rgba(148,163,184,0.3)";
 
-        return (
-          <div key={label} className="flex items-center gap-2">
-            <span className="w-14 text-xs font-medium text-foreground">
-              {label}
-            </span>
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary border border-border">
-              <div
-                className="h-full rounded-full transition-all duration-200"
-                style={{
-                  width: `${confidence * 100}%`,
-                  backgroundColor: aboveThreshold
-                    ? "hsl(221 83% 53%)"
-                    : isActive
-                      ? "#eab308"
-                      : "#94a3b8",
-                }}
-              />
-            </div>
-            <span className="w-10 text-right font-mono text-xs text-muted-foreground">
-              {isActive ? `${(confidence * 100).toFixed(0)}%` : "—"}
-            </span>
-          </div>
-        );
-      })}
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-lg border p-3"
+      style={{
+        background: "rgba(0,0,0,0.72)",
+        borderColor: "rgba(0,255,136,0.25)",
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      {/* Title */}
+      <div className="flex items-center gap-1.5">
+        {aboveThreshold && (
+          <span
+            className="animate-pulse"
+            style={{ color: "#00ff88", fontSize: 9 }}
+          >
+            ◉
+          </span>
+        )}
+        <span
+          style={{
+            color: "#00ff88",
+            fontFamily: "monospace",
+            fontSize: 10,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          Sign Detection
+        </span>
+      </div>
+
+      {/* Confidence bar */}
+      <div
+        className="overflow-hidden rounded-full"
+        style={{
+          height: 6,
+          background: "rgba(255,255,255,0.08)",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: barWidth,
+            background: barColor,
+            borderRadius: 9999,
+            transition: "width 150ms ease, background 150ms ease",
+          }}
+        />
+      </div>
+
+      {/* Percentage + detected sign */}
+      <div className="flex items-center justify-between">
+        <span
+          style={{
+            fontFamily: "monospace",
+            fontSize: 10,
+            color: aboveThreshold ? "#00ff88" : "rgba(0,255,136,0.45)",
+          }}
+        >
+          {aboveThreshold && detection
+            ? `DETECTED: ${detection.sign}`
+            : "NO SIGN"}
+        </span>
+        <span
+          style={{
+            fontFamily: "monospace",
+            fontSize: 11,
+            color: aboveThreshold ? "#00ff88" : "rgba(0,255,136,0.45)",
+            fontWeight: 600,
+          }}
+        >
+          {confidence > 0.005 ? `${(confidence * 100).toFixed(0)}%` : "0%"}
+        </span>
+      </div>
     </div>
   );
 }

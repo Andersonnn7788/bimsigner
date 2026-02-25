@@ -23,7 +23,7 @@ async def gloss_to_sentence(glosses: list[str]) -> str:
     )
     client = _get_client()
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash-lite",
         contents=prompt,
     )
     return response.text.strip()
@@ -42,7 +42,7 @@ async def text_to_bim(text: str) -> tuple[str, list[str]]:
     )
     client = _get_client()
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash-lite",
         contents=prompt,
     )
 

@@ -13,6 +13,7 @@ interface HolisticResult {
 export function useMediaPipe() {
   const landmarkerRef = useRef<unknown>(null);
   const rafIdRef = useRef<number>(0);
+  const onResultRef = useRef<((result: HolisticResult) => void) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const resultRef = useRef<HolisticResult>({
@@ -73,23 +74,30 @@ export function useMediaPipe() {
       } | null;
       if (!landmarker) return;
 
+      // Store callback in ref so the rAF loop always uses the latest version
+      onResultRef.current = onResult;
+
       let lastTimestamp = -1;
 
       const detect = () => {
-        if (video.readyState >= 2) {
-          const now = performance.now();
-          if (now !== lastTimestamp) {
-            lastTimestamp = now;
-            const raw = landmarker.detectForVideo(video, now);
-            const result: HolisticResult = {
-              poseLandmarks: raw.poseLandmarks?.[0] as Landmark[] | undefined,
-              faceLandmarks: raw.faceLandmarks?.[0] as Landmark[] | undefined,
-              leftHandLandmarks: raw.leftHandLandmarks?.[0] as Landmark[] | undefined,
-              rightHandLandmarks: raw.rightHandLandmarks?.[0] as Landmark[] | undefined,
-            };
-            resultRef.current = result;
-            onResult(result);
+        try {
+          if (video.readyState >= 2) {
+            const now = performance.now();
+            if (now !== lastTimestamp) {
+              lastTimestamp = now;
+              const raw = landmarker.detectForVideo(video, now);
+              const result: HolisticResult = {
+                poseLandmarks: raw.poseLandmarks?.[0] as Landmark[] | undefined,
+                faceLandmarks: raw.faceLandmarks?.[0] as Landmark[] | undefined,
+                leftHandLandmarks: raw.leftHandLandmarks?.[0] as Landmark[] | undefined,
+                rightHandLandmarks: raw.rightHandLandmarks?.[0] as Landmark[] | undefined,
+              };
+              resultRef.current = result;
+              onResultRef.current?.(result);
+            }
           }
+        } catch (err) {
+          console.error("Detection frame error:", err);
         }
         rafIdRef.current = requestAnimationFrame(detect);
       };

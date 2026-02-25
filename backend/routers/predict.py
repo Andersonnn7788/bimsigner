@@ -21,5 +21,5 @@ async def predict(request: PredictRequest):
                 detail=f"Frame {i} has {len(frame)} values, expected 1662",
             )
 
-    sign, confidence, action_index = model_service.predict(request.landmarks)
-    return PredictResponse(sign=sign, confidence=confidence, action_index=action_index)
+    sign, confidence, action_index, confidences = model_service.predict(request.landmarks)
+    return PredictResponse(sign=sign, confidence=confidence, action_index=action_index, confidences=confidences)

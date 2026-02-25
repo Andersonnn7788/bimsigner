@@ -3,6 +3,11 @@ export const API_URL =
 
 export const ACTION_LABELS = ["Encik", "Tolong", "Saya", "Idle"] as const;
 
+// Backend model returns confidences in this order (must match backend ACTIONS list)
+export const BACKEND_ACTIONS = ["Idle", "Encik", "Tolong", "Saya"] as const;
+
+export const TARGET_SEQUENCE = ["Encik", "Tolong", "Saya"] as const;
+
 export const CONFIDENCE_THRESHOLD = 0.7;
 
 export const SEQUENCE_LENGTH = 30;

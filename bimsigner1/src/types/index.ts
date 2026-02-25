@@ -9,6 +9,7 @@ export interface PredictResponse {
   sign: string;
   confidence: number;
   action_index: number;
+  confidences: number[];
 }
 
 export interface SentenceResponse {

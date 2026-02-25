@@ -6,7 +6,7 @@ export function useAudioPlayback() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const play = useCallback((audioBlob: Blob) => {
+  const play = useCallback((audioBlob: Blob, onEnded?: () => void) => {
     const url = URL.createObjectURL(audioBlob);
 
     if (!audioRef.current) {
@@ -18,20 +18,28 @@ export function useAudioPlayback() {
     audio.onended = () => {
       setIsPlaying(false);
       URL.revokeObjectURL(url);
+      onEnded?.();
     };
     audio.onerror = () => {
       setIsPlaying(false);
       URL.revokeObjectURL(url);
+      onEnded?.();
     };
 
     setIsPlaying(true);
-    audio.play().catch(() => setIsPlaying(false));
+    audio.play().catch(() => {
+      setIsPlaying(false);
+      onEnded?.();
+    });
   }, []);
 
-  const fallbackSpeak = useCallback((text: string) => {
+  const fallbackSpeak = useCallback((text: string, onEnded?: () => void) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "ms-MY";
-    utterance.onend = () => setIsPlaying(false);
+    utterance.onend = () => {
+      setIsPlaying(false);
+      onEnded?.();
+    };
     setIsPlaying(true);
     speechSynthesis.speak(utterance);
   }, []);

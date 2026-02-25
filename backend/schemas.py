@@ -9,6 +9,7 @@ class PredictResponse(BaseModel):
     sign: str
     confidence: float
     action_index: int
+    confidences: list[float]
 
 
 class GlossRequest(BaseModel):

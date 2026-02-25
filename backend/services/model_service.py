@@ -18,7 +18,7 @@ def is_loaded() -> bool:
     return _model is not None
 
 
-def predict(landmarks: list[list[float]]) -> tuple[str, float, int]:
+def predict(landmarks: list[list[float]]) -> tuple[str, float, int, list[float]]:
     """Predict sign from 30 frames of 1662-dim landmark vectors."""
     if _model is None:
         raise RuntimeError("Model not loaded")
@@ -28,4 +28,5 @@ def predict(landmarks: list[list[float]]) -> tuple[str, float, int]:
     prediction = _model.predict(sequence, verbose=0)[0]
     action_index = int(np.argmax(prediction))
     confidence = float(prediction[action_index])
-    return ACTIONS[action_index], confidence, action_index
+    confidences = [float(p) for p in prediction]
+    return ACTIONS[action_index], confidence, action_index, confidences
