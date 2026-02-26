@@ -1,5 +1,5 @@
 import { API_URL } from "./constants";
-import type { PredictResponse, SentenceResponse, BIMResponse } from "@/types";
+import type { PredictResponse, SentenceResponse, BIMResponse, Message } from "@/types";
 
 export async function predictSign(
   landmarks: number[][]
@@ -14,12 +14,20 @@ export async function predictSign(
 }
 
 export async function glossToSentence(
-  glosses: string[]
+  glosses: string[],
+  conversationHistory?: Message[]
 ): Promise<SentenceResponse> {
+  const body: Record<string, unknown> = { glosses };
+  if (conversationHistory?.length) {
+    body.conversation_history = conversationHistory.map((m) => ({
+      sender: m.sender,
+      text: m.text,
+    }));
+  }
   const res = await fetch(`${API_URL}/api/gloss-to-sentence`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ glosses }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Gloss-to-sentence failed: ${res.status}`);
   return res.json();

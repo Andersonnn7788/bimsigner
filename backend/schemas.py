@@ -12,8 +12,14 @@ class PredictResponse(BaseModel):
     confidences: list[float]
 
 
+class ConversationMessage(BaseModel):
+    sender: str
+    text: str
+
+
 class GlossRequest(BaseModel):
     glosses: list[str]
+    conversation_history: list[ConversationMessage] = []
 
 
 class SentenceResponse(BaseModel):

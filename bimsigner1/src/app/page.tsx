@@ -70,10 +70,12 @@ export default function Home() {
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Keep sentence accessible in effects without stale closures
+  // Keep sentence & messages accessible in effects without stale closures
   const sentenceRef = useRef(state.sentence);
+  const messagesRef = useRef(state.messages);
   useEffect(() => {
     sentenceRef.current = state.sentence;
+    messagesRef.current = state.messages;
   });
 
   // --- Start camera + mediapipe + WebSocket ---
@@ -110,7 +112,7 @@ export default function Home() {
     if (transitionRef.current) return;
     transitionRef.current = true;
 
-    glossToSentence(state.detectedSequence)
+    glossToSentence(state.detectedSequence, messagesRef.current)
       .then((res) => {
         dispatch({ type: "TRANSLATION_SUCCESS", sentence: res.sentence });
       })

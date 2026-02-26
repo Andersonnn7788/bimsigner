@@ -12,7 +12,17 @@ async def gloss_to_sentence(request: GlossRequest):
     if not settings.gemini_api_key:
         raise HTTPException(status_code=503, detail="Gemini API key not configured")
 
-    sentence = await gemini_service.gloss_to_sentence(request.glosses)
+    history = [msg.model_dump() for msg in request.conversation_history]
+
+    try:
+        sentence = await gemini_service.gloss_to_sentence(
+            request.glosses, conversation_history=history
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"Gemini translation failed: {exc}"
+        ) from exc
+
     return SentenceResponse(sentence=sentence)
 
 
