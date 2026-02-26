@@ -13,7 +13,7 @@
 
 ## The Problem
 
-Over **70,000 deaf Malaysians** communicate primarily through **Bahasa Isyarat Malaysia (BIM)** — a fully distinct language with its own grammar, vocabulary, and structure. Yet when they visit government counters, hospitals, or public offices, they face an invisible wall: no staff member is trained in BIM, and no bridge exists between their language and the spoken Bahasa Malaysia used by officers.
+Roughly **44,000 deaf Malaysians** communicate primarily through **Bahasa Isyarat Malaysia (BIM)** — a fully distinct language with its own grammar, vocabulary, and structure. Yet when they visit government counters, hospitals, or public offices, they face an invisible wall: no staff member is trained in BIM, and no bridge exists between their language and the spoken Bahasa Malaysia used by officers.
 
 This is not just inconvenient — it is a fundamental inequality.
 
@@ -33,13 +33,16 @@ BimSigner directly addresses all three SDGs by deploying AI to demolish the lang
 
 BimSigner is a **real-time, AI-powered communication bridge** deployed at government service counters. It gives deaf BIM users a voice — and gives officers the ability to understand and respond in plain language.
 
-The system consists of three integrated modules:
+The system consists of four tightly integrated modules:
 
 | Module | Function |
 |--------|----------|
 | **Sign Recognition** | Webcam captures BIM gestures → LSTM model identifies signs in real time |
 | **AI Translation** | Gemini converts sign tokens (glosses) into grammatically correct Malay sentences |
 | **Officer Interface** | Officer speaks; TTS converts their response into BIM-friendly simplified text |
+| **3D BIM Sign Avatar** | Officer's spoken Malay → Gemini generates a BIM gloss sequence → avatar renders the signed gestures back to the deaf user |
+
+Unlike one-way assistive tools, BimSigner completes the **full bidirectional communication loop**. The sign language avatar gives deaf users a visual BIM response in return — removing the need for officers to know sign language in either direction.
 
 ---
 
@@ -78,7 +81,7 @@ BIM recognition produces raw **gloss tokens** (e.g., `["Encik", "Tolong", "Saya"
 #### 2. Text-to-BIM Simplification
 When officers respond verbally, their speech is transcribed and sent to Gemini, which simplifies the Malay sentence into BIM-compatible plain output — short, direct, and structured for BIM comprehension.
 
-**We chose Gemini because** while ElevenLabs TTS handles audio output for the hearing officer side, deaf users need a visual, readable format optimised for their language. Gemini's generation quality and configurable low temperature (0.3) ensure consistent, deterministic simplification — **leading to** clear, accessible responses that deaf users can actually read and understand without requiring written Malay fluency.
+**We chose Gemini because** while ElevenLabs TTS handles audio output for the hearing officer side, deaf users need a visual response in their own language. Gemini's generation quality and configurable low temperature (0.3) ensure consistent, deterministic output — **leading to** an ordered BIM gloss sequence (e.g., `["RUMAH", "PERGI", "BUKA"]`) that is passed directly to the sign language avatar, which renders each sign as an animated gesture in the centre panel and completes the return channel of the communication bridge.
 
 #### 3. Check-in Intent Prediction
 On the check-in page, Gemini analyses a visitor's profile, past visit history, and contextual signals to intelligently predict the most likely purpose of the current visit.
@@ -121,7 +124,7 @@ API:         Google AI Studio (google-genai SDK)
 │  │  /locations    │                  │  └─────────┬───────────┘  │  │
 │  │                │                  │            │ 1662-dim     │  │
 │  │  MediaPipe     │                  │  ┌─────────▼───────────┐  │  │
-│  │  (browser,     │                  │  │  LSTM Model Service  │  │  │
+│  │  (browser,     │                  │  │  LSTM Model Service │  │  │
 │  │   Google WASM) │                  │  │  (TensorFlow/Keras) │  │  │
 │  │                │                  │  └─────────┬───────────┘  │  │
 │  │  Google Maps   │                  │            │ gloss tokens │  │
@@ -135,12 +138,12 @@ API:         Google AI Studio (google-genai SDK)
 │                                      │  │   (ElevenLabs)      │  │  │
 │                                      │  └─────────────────────┘  │  │
 │                                      └───────────────────────────┘  │
-│  ┌────────────────┐                                                  │
-│  │  Training      │                                                  │
-│  │  Pipeline      │                                                  │
-│  │  MediaPipe +   │                                                  │
-│  │  TF/Keras LSTM │                                                  │
-│  └────────────────┘                                                  │
+│  ┌────────────────┐                                                 │
+│  │  Training      │                                                 │
+│  │  Pipeline      │                                                 │
+│  │  MediaPipe +   │                                                 │
+│  │  TF/Keras LSTM │                                                 │
+│  └────────────────┘                                                 │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -148,14 +151,35 @@ API:         Google AI Studio (google-genai SDK)
 
 | Component | Responsibility |
 |-----------|---------------|
-| **Next.js Frontend** | 3-panel UI (camera, avatar, officer controls); Google Maps integration; WebSocket client; check-in flow |
+| **Next.js Frontend** | 3-panel UI: CameraPanel (sign input), AvatarPanel (BIM gesture output/return channel), OfficerControls; Google Maps; WebSocket client; check-in flow |
 | **FastAPI Backend** | WebSocket sign detection server; REST API orchestration; MediaPipe + LSTM + Gemini + TTS coordination |
 | **MediaPipe Service** | Per-frame holistic landmark extraction → 1662-dim feature vectors; CPU work offloaded via `asyncio.to_thread()` |
 | **LSTM Model Service** | 30-frame sliding window inference; temporal smoothing (5 consecutive matches); confidence thresholding at 0.7 |
-| **Gemini Service** | BIM gloss-to-sentence; Malay-to-BIM simplification; check-in intent prediction with confidence scoring |
+| **Gemini Service** | BIM gloss-to-sentence; Malay-to-BIM gloss sequence generation (drives avatar); check-in intent prediction with confidence scoring |
+| **Avatar Renderer** | Receives BIM gloss sequence from Gemini; renders signed gesture animations in the AvatarPanel; overlays live sign badges per active gloss |
 | **TTS Service** | Malay text-to-speech for officer-facing audio output (ElevenLabs multilingual v2) |
 | **Firebase Firestore** | Visitor profile storage; visit history records; real-time check-in state |
 | **Training Pipeline** | Webcam data collection → MediaPipe feature extraction → LSTM training (EarlyStopping) → model export |
+
+### Bidirectional Communication Flow
+
+```
+[Deaf User signs]
+      ↓
+ CameraPanel → WebSocket → MediaPipe → LSTM → gloss tokens
+                                                    ↓
+                                             Gemini (gloss→sentence)
+                                                    ↓
+                                         Officer hears (ElevenLabs TTS)
+                                                    ↓
+                                           Officer speaks response
+                                                    ↓
+                                         Gemini (text→BIM gloss sequence)
+                                                    ↓
+                                       Avatar renders signed gestures
+                                                    ↓
+                                           [Deaf User sees BIM]
+```
 
 ---
 
@@ -165,18 +189,34 @@ API:         Google AI Studio (google-genai SDK)
 The primary interface deployed at government service counters. Three-panel layout optimised for simultaneous deaf user and officer interaction:
 
 - **Camera Panel (34%)**: Live webcam feed with MediaPipe landmark overlay, real-time detected sign chips, and confidence HUD
-- **Avatar Panel (33%)**: Conversation history log and AI-translated sentences displayed for both parties
+- **Avatar Panel (33%)**: 3D BIM sign language avatar that renders the officer's response as signed gesture animations; active sign badges displayed in real time; full conversation history log below
 - **Officer Controls (33%)**: Microphone input, live transcript display, and BIM-simplified officer response
 
-**Detection Pipeline:**
+**Full Communication Cycle (SIGNING → TRANSLATING → SPEAKING → LISTENING → AVATAR → SIGNING):**
 1. Webcam frames are streamed via WebSocket to the FastAPI backend
 2. MediaPipe extracts 1662 holistic landmarks per frame (pose + face + hands)
-3. 30-frame sequences are fed into the LSTM model
-4. Temporal smoothing requires 5 consecutive identical predictions before confirming a sign
-5. Confirmed gloss tokens are batched and sent to Gemini for sentence reconstruction
+3. 30-frame sequences are fed into the LSTM model; temporal smoothing requires 5 consecutive identical predictions before confirming a sign
+4. Confirmed gloss tokens are sent to Gemini, which reconstructs a grammatically correct Malay sentence
+5. ElevenLabs TTS plays the sentence aloud for the officer
+6. Officer speaks their response; speech is transcribed in real time
+7. Transcription is sent to Gemini (`/api/text-to-bim`), which generates an ordered BIM gloss sequence
+8. The avatar renders each sign as an animated gesture in the centre panel, with live sign badges overlaid
+9. Cycle returns to SIGNING for the next deaf user input
+
+### Avatar — 3D BIM Sign Language Renderer
+
+The sign language avatar is the critical return channel that makes BimSigner a true communication bridge rather than a one-way transcription tool. It ensures the deaf user receives the officer's response in BIM — their native language — without requiring the officer to know a single sign.
+
+**How it works:**
+- The officer's spoken response is transcribed and sent to Gemini (`/api/text-to-bim`)
+- Gemini 2.5 Flash Lite converts the sentence into a BIM-ordered gloss sequence and a simplified Malay caption
+- The avatar renders the signed gesture sequence in the centre panel, sign by sign, with gloss badges overlaid to reinforce comprehension
+- On completion, the system returns to SIGNING — ready for the next round of interaction
+
+**Why this matters:** Without the avatar, a deaf user could communicate to the officer but receive no response in BIM. The avatar eliminates the asymmetry and closes the loop entirely — both parties communicate in their own language, with AI bridging every step.
 
 ### Check-in Page — AI-Powered Pre-Visit Intent Prediction
-A pre-visit tool that reduces anxiety and wait times by letting visitors register and declare intent before reaching the counter:
+A pre-visit tool that reduces anxiety and wait times by letting visitors(deaf users) register and declare intent before reaching the counter:
 
 - Visitor profile card with Firebase-synced visit history
 - **Gemini 2.5 Flash Lite** analyses visit history and context to predict the most likely purpose of the current visit
@@ -240,8 +280,9 @@ The `ACTIONS` class label list is also hardcoded identically in `training/config
 ### Phase 1 — Core Communication Bridge (Current)
 - [x] Real-time BIM sign detection (10+ common signs)
 - [x] Gemini-powered gloss-to-sentence translation
-- [x] Gemini-powered text-to-BIM simplification
 - [x] Officer TTS audio output (Malay)
+- [x] 3D BIM sign language avatar (return channel for officer→deaf communication)
+- [x] Gemini-powered text-to-BIM gloss sequence generation
 - [x] Gemini-powered check-in intent prediction
 - [x] Firebase profile & visit history storage
 - [x] Google Maps deaf-accessible locations directory
