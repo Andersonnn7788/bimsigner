@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { ChevronUp, ChevronDown, MessageSquare } from "lucide-react";
+import { useRef, useEffect } from "react";
+import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Message } from "@/types";
 
@@ -10,66 +10,54 @@ interface Props {
 }
 
 export default function ConversationStrip({ messages }: Props) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  if (messages.length === 0) return null;
-
   return (
-    <div className="border-t border-border bg-card shadow-sm">
-      {/* Toggle header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center gap-2 px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-accent/50 transition"
-      >
-        <MessageSquare className="h-3.5 w-3.5" />
-        Conversation ({messages.length})
-        {isExpanded ? (
-          <ChevronDown className="ml-auto h-3.5 w-3.5" />
-        ) : (
-          <ChevronUp className="ml-auto h-3.5 w-3.5" />
+    <div className="flex h-36 shrink-0 flex-col border-t border-border bg-background/50">
+      {/* Header */}
+      <div className="flex items-center gap-1.5 px-4 py-2 border-b border-border shrink-0">
+        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="panel-title">Conversation</span>
+        {messages.length > 0 && (
+          <span className="ml-auto text-[10px] text-muted-foreground">
+            {messages.length} {messages.length === 1 ? "message" : "messages"}
+          </span>
         )}
-      </button>
+      </div>
 
-      {/* Messages - compact when collapsed, full when expanded */}
+      {/* Message list */}
       <div
-        className={cn(
-          "overflow-hidden transition-all duration-200",
-          isExpanded ? "max-h-48" : "max-h-10"
-        )}
+        ref={scrollRef}
+        className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-4 py-2"
       >
-        <div
-          ref={scrollRef}
-          className={cn(
-            "px-4 pb-2",
-            isExpanded
-              ? "flex flex-col gap-1 overflow-y-auto max-h-44"
-              : "flex items-center gap-2 overflow-x-auto"
-          )}
-        >
-          {messages.map((msg) => (
+        {messages.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic text-center mt-4">
+            Conversation will appear here
+          </p>
+        ) : (
+          messages.map((msg) => (
             <div
               key={msg.id}
               className={cn(
-                "shrink-0 rounded-md px-2.5 py-1 text-xs",
+                "max-w-[85%] rounded-lg px-3 py-1.5 text-xs",
                 msg.sender === "deaf"
-                  ? "bg-secondary text-secondary-foreground"
-                  : "bg-primary/10 text-primary"
+                  ? "self-start bg-secondary text-secondary-foreground"
+                  : "self-end bg-primary/10 text-primary"
               )}
             >
-              <span className="font-medium">
-                {msg.sender === "deaf" ? "You" : "Staff"}:
-              </span>{" "}
+              <span className="font-semibold">
+                {msg.sender === "deaf" ? "You" : "Staff"}:{" "}
+              </span>
               {msg.text}
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -4,18 +4,16 @@ import { useState, useCallback, useReducer, useEffect, useRef } from "react";
 import { useWebcam } from "@/hooks/useWebcam";
 import { useMediaPipe } from "@/hooks/useMediaPipe";
 import type { HolisticResult } from "@/hooks/useMediaPipe";
-import { useLandmarkBuffer } from "@/hooks/useLandmarkBuffer";
+import { useDetectionSocket } from "@/hooks/useDetectionSocket";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";
 import { glossToSentence, textToSpeech, textToBIM } from "@/lib/api";
 import { stageReducer, initialState } from "@/lib/stageMachine";
-import StepperBar from "@/components/StepperBar";
-import ConversationStrip from "@/components/ConversationStrip";
-import SigningStage from "@/components/stages/SigningStage";
-import TranslatingStage from "@/components/stages/TranslatingStage";
-import SpeakingStage from "@/components/stages/SpeakingStage";
-import ListeningStage from "@/components/stages/ListeningStage";
-import AvatarStage from "@/components/stages/AvatarStage";
+import { cn } from "@/lib/utils";
+import CameraPanel from "@/components/CameraPanel";
+import AvatarPanel from "@/components/AvatarPanel";
+import OfficerControls from "@/components/OfficerControls";
+import RecognitionBar from "@/components/RecognitionBar";
 import type { Landmark } from "@/types";
 
 export default function Home() {
@@ -38,8 +36,8 @@ export default function Home() {
     isReady: isMediaPipeReady,
   } = useMediaPipe();
 
-  // Landmark buffer with sign detection callback
-  const buffer = useLandmarkBuffer({
+  // WebSocket-based detection (backend runs MediaPipe + LSTM)
+  const detection = useDetectionSocket({
     onSignDetected: useCallback((sign: string) => {
       dispatch({ type: "SIGN_DETECTED", sign });
     }, []),
@@ -67,29 +65,31 @@ export default function Home() {
   // Track if transitions are in progress to prevent double-firing
   const transitionRef = useRef(false);
 
+  // Silence detection for auto-send
+  const [silenceProgress, setSilenceProgress] = useState(0);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Keep sentence accessible in effects without stale closures
   const sentenceRef = useRef(state.sentence);
   useEffect(() => {
     sentenceRef.current = state.sentence;
   });
 
-  // Keep addFrame always fresh via ref (avoids stale closure in rAF loop)
-  const addFrameRef = useRef(buffer.addFrame);
-  useEffect(() => {
-    addFrameRef.current = buffer.addFrame;
-  });
-
-  // --- Start camera + mediapipe ---
+  // --- Start camera + mediapipe + WebSocket ---
   const handleStart = useCallback(async () => {
     await startWebcam();
     await initMediaPipe();
 
+    // Connect WebSocket for backend detection
+    detection.connect();
+
     setTimeout(() => {
       if (videoRef.current) {
+        // MediaPipe detection loop for visualization only
         startDetection(
           videoRef.current,
           (result: HolisticResult) => {
-            addFrameRef.current(result);
             setLandmarks({
               pose: result.poseLandmarks,
               face: result.faceLandmarks,
@@ -98,9 +98,11 @@ export default function Home() {
             });
           }
         );
+        // Start sending video frames to backend via WebSocket
+        detection.startSending(videoRef.current);
       }
     }, 500);
-  }, [startWebcam, initMediaPipe, videoRef, startDetection]);
+  }, [startWebcam, initMediaPipe, videoRef, startDetection, detection.connect, detection.startSending]);
 
   // --- Auto-transition: TRANSLATING (call glossToSentence) ---
   useEffect(() => {
@@ -166,6 +168,34 @@ export default function Home() {
     resetSpeech();
   }, [stopSpeech, resetSpeech]);
 
+  // --- Auto-send: silence detection (2.5s after last transcript change) ---
+  useEffect(() => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+
+    if (state.stage !== "LISTENING" || !transcript.trim()) {
+      setSilenceProgress(0);
+      return;
+    }
+
+    const SILENCE_MS = 2500;
+    const startTime = Date.now();
+    countdownIntervalRef.current = setInterval(() => {
+      setSilenceProgress(Math.min(((Date.now() - startTime) / SILENCE_MS) * 100, 100));
+    }, 50);
+
+    silenceTimerRef.current = setTimeout(() => {
+      clearInterval(countdownIntervalRef.current!);
+      setSilenceProgress(0);
+      handleStaffSend();
+    }, SILENCE_MS);
+
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
+  }, [transcript, state.stage, handleStaffSend]);
+
   // --- Auto-transition: AVATAR (call textToBIM) ---
   useEffect(() => {
     if (state.stage !== "AVATAR" || !state.isLoading) return;
@@ -190,101 +220,91 @@ export default function Home() {
   // --- Avatar done ---
   const handleAvatarDone = useCallback(() => {
     dispatch({ type: "AVATAR_COMPLETE" });
-    buffer.resetBuffer();
-  }, [buffer]);
+    detection.resetBuffer();
+  }, [detection.resetBuffer]);
 
   // --- Reset buffer when cycling back to SIGNING ---
   useEffect(() => {
     if (state.stage === "SIGNING" && state.detectedSequence.length === 0) {
-      buffer.resetBuffer();
+      detection.resetBuffer();
     }
-  }, [state.stage, state.detectedSequence.length, buffer]);
+  }, [state.stage, state.detectedSequence.length, detection.resetBuffer]);
+
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-border bg-card px-6 py-3 shadow-sm">
-        <h1 className="text-xl font-bold tracking-tight text-foreground">
+    <div className="flex h-screen flex-col bg-background overflow-hidden">
+
+      {/* ── HEADER ── */}
+      <header className="flex h-11 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-sm">
+        <h1 className="text-sm font-bold tracking-tight text-foreground">
           <span className="text-primary">BIM</span> Signer
         </h1>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {isMediaPipeLoading && (
+            <div className="h-3 w-3 animate-spin rounded-full border border-muted-foreground/30 border-t-muted-foreground" />
+          )}
           {isMediaPipeReady && (
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-              Ready
+              MediaPipe Ready
             </span>
           )}
         </div>
       </header>
 
-      {/* Stepper Bar */}
-      <StepperBar currentStage={state.stage} />
+      {/* ── BODY: THREE-COLUMN LAYOUT ── */}
+      <div className={cn("flex flex-1 min-h-0 overflow-hidden")}>
 
-      {/* Active Stage */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-2">
-        {state.stage === "SIGNING" && (
-          <SigningStage
+        {/* ── LEFT: CAMERA (34%) ── */}
+        <div className="w-[34%] shrink-0 overflow-hidden">
+          <CameraPanel
             videoRef={videoRef}
             isWebcamReady={isWebcamReady}
-            webcamError={webcamError}
-            isMediaPipeLoading={isMediaPipeLoading}
             isMediaPipeReady={isMediaPipeReady}
-            poseLandmarks={landmarks.pose}
-            faceLandmarks={landmarks.face}
-            leftHandLandmarks={landmarks.leftHand}
-            rightHandLandmarks={landmarks.rightHand}
-            detection={buffer.lastDetection}
-            detectedSequence={state.detectedSequence}
+            isMediaPipeLoading={isMediaPipeLoading}
+            webcamError={webcamError}
             onStart={handleStart}
+            landmarks={landmarks}
+            lastDetection={detection.lastDetection}
+            detectedSequence={state.detectedSequence}
+            currentStage={state.stage}
           />
-        )}
+        </div>
 
-        {state.stage === "TRANSLATING" && (
-          <TranslatingStage
-            glosses={state.detectedSequence}
-            sentence={state.sentence}
-            isLoading={state.isLoading}
-            error={state.error}
-          />
-        )}
-
-        {state.stage === "SPEAKING" && (
-          <SpeakingStage
-            sentence={state.sentence}
-            isPlaying={state.isPlaying}
-          />
-        )}
-
-        {state.stage === "LISTENING" && (
-          <ListeningStage
-            transcript={state.staffTranscript}
-            isListening={isListening}
-            onSend={handleStaffSend}
-          />
-        )}
-
-        {state.stage === "AVATAR" && (
-          <AvatarStage
+        {/* ── MIDDLE: AVATAR (33%) ── */}
+        <div className="w-[33%] border-x border-border shrink-0 overflow-hidden">
+          <AvatarPanel
             signs={state.avatarSigns}
             isLoading={state.isLoading}
             error={state.error}
             onDone={handleAvatarDone}
+            stage={state.stage}
+            sentence={state.sentence}
+            messages={state.messages}
           />
-        )}
+        </div>
 
-        {/* Hidden video element to keep webcam stream alive when not in SIGNING stage */}
-        {state.stage !== "SIGNING" && isWebcamReady && (
-          <video
-            ref={videoRef}
-            className="hidden"
-            playsInline
-            muted
+        {/* ── RIGHT: OFFICER CONTROLS (33%) ── */}
+        <div className="w-[33%] shrink-0 overflow-hidden">
+          <OfficerControls
+            transcript={state.staffTranscript}
+            isListening={isListening}
+            silenceProgress={silenceProgress}
+            stage={state.stage}
           />
-        )}
+        </div>
+
       </div>
 
-      {/* Conversation Strip */}
-      <ConversationStrip messages={state.messages} />
+      {/* ── BOTTOM: RECOGNITION BAR ── */}
+      <RecognitionBar
+        detectedSequence={state.detectedSequence}
+        sentence={state.sentence}
+        isLoading={state.isLoading}
+        stage={state.stage}
+        lastDetection={detection.lastDetection}
+      />
+
     </div>
   );
 }

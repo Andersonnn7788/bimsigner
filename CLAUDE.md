@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 BimSigner is a BIM (Bahasa Isyarat Malaysia) sign language application with three components:
-- **bimsigner1/**: Next.js 16 web frontend (React 19, TypeScript, Tailwind CSS v4)
+- **bimsigner1/**: Next.js 16 web frontend (React 19, shadcn/uiTypeScript, Tailwind CSS v4)
 - **backend/**: FastAPI Python backend (inference, Gemini API, TTS)
 - **training/**: Python scripts for collecting sign data and training the LSTM model
 - **models/**: Shared directory for trained model artifacts (`.h5` files)
@@ -27,7 +27,8 @@ npm run lint     # Run ESLint (flat config, eslint-config-next with core-web-vit
 ```bash
 cd backend
 .venv\Scripts\activate       # Windows
-uvicorn main:app --reload    # Start FastAPI dev server
+uvicorn main:app --reload --ws websockets-sansio  # Start FastAPI dev server
+# Or: python main.py                               # Uses uvicorn.run() with same config
 ```
 
 ### Training Pipeline (training/)

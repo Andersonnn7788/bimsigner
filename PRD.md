@@ -205,25 +205,34 @@ This must match the Python `extract_keypoints` function exactly.
 
 ## 9. UI Layout
 
+Three-column always-visible layout. All panels are shown simultaneously; active states change per stage.
+
 ```
-┌────────────────────────┬────────────────────────┐
-│                        │   Conversation Panel    │
-│     Webcam Feed        │  ┌──────────────────┐  │
-│   + Landmark Overlay   │  │  Message History  │  │
-│                        │  │  (scrollable)     │  │
-│                        │  │                   │  │
-│  ┌──────────────────┐  │  └──────────────────┘  │
-│  │  Detected Sign    │  │                        │
-│  │  ██████░░ 87%     │  │  ┌──────────────────┐  │
-│  └──────────────────┘  │  │  Avatar Player    │  │
-│                        │  └──────────────────┘  │
-│  ┌──────────────────┐  │                        │
-│  │ Gloss tokens:     │  │  ┌──────────────────┐  │
-│  │ [Sign] [Sign] ... │  │  │ 🎤 Staff Input   │  │
-│  │ 🔊 Speak | Clear │  │  │ [Speak] [Send]   │  │
-│  └──────────────────┘  │  └──────────────────┘  │
-└────────────────────────┴────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  [BIM Signer]                         [MediaPipe status badge]     │
+├──────────────────┬──────────────────┬──────────────────────────────┤
+│   YOUR CAMERA    │    BIM AVATAR    │     OFFICER CONTROLS         │
+│                  │                  │  ┌──────────────────────┐    │
+│  [webcam feed]   │  [avatar video]  │  │  Officer profile      │    │
+│  [landmarks]     │  or idle/speak   │  │  + role badges        │    │
+│                  │  animation       │  └──────────────────────┘    │
+│  [Start Camera]  │                  │  Start Speaking button        │
+│  [confidence]    │  [conversation   │  Live transcript (scroll)     │
+│  [sign chips]    │   history]       │  Send Reply button            │
+│  [stage badge]   │                  │  Stage status grid            │
+└──────────────────┴──────────────────┴──────────────────────────────┘
+│  DETECTED SIGNS: [Encik✓] [Tolong✓] [Saya→] │ AI: "sentence..."  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+### Panel Responsibilities
+
+| Panel | Component | Always Visible | Active State |
+|-------|-----------|---------------|--------------|
+| Left (34%) | `CameraPanel` | Yes | Sign chips highlight in SIGNING |
+| Middle (33%) | `AvatarPanel` | Yes | Video plays in AVATAR, pulse in SPEAKING |
+| Right (33%) | `OfficerControls` | Yes | Mic button enabled in LISTENING |
+| Bottom bar | `RecognitionBar` | Yes | Spinner in TRANSLATING, sentence otherwise |
 
 ## 10. Project Structure
 

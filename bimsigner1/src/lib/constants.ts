@@ -1,5 +1,5 @@
 export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 export const ACTION_LABELS = ["Encik", "Tolong", "Saya", "Idle"] as const;
 
@@ -8,7 +8,7 @@ export const BACKEND_ACTIONS = ["Idle", "Encik", "Tolong", "Saya"] as const;
 
 export const REQUIRED_SIGNS = ["Encik", "Tolong", "Saya"] as const;
 
-export const CONFIDENCE_THRESHOLD = 0.7;
+export const CONFIDENCE_THRESHOLD = 0.5;
 
 export const SEQUENCE_LENGTH = 30;
 

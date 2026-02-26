@@ -16,30 +16,33 @@ export default function TranslatingStage({
   error,
 }: Props) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6">
+    <div className="flex flex-col gap-4 p-4">
+      <p className="panel-title">Translation</p>
+
       {/* Detected glosses */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {glosses.map((gloss, i) => (
-          <Badge key={`${gloss}-${i}`} variant="secondary" className="text-base px-3 py-1">
-            {gloss}
-          </Badge>
-        ))}
+      <div>
+        <p className="text-xs text-muted-foreground mb-2">Detected signs:</p>
+        <div className="flex flex-wrap gap-2">
+          {glosses.map((gloss, i) => (
+            <Badge key={`${gloss}-${i}`} variant="secondary" className="text-sm px-2.5 py-0.5">
+              {gloss}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       {/* Loading spinner */}
       {isLoading && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-3 border-primary/20 border-t-primary" />
-          <p className="text-sm text-muted-foreground">
-            Translating to Malay...
-          </p>
+        <div className="flex items-center gap-2.5 text-muted-foreground">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+          <p className="text-sm">Translating to Malay...</p>
         </div>
       )}
 
       {/* Resulting sentence */}
       {sentence && (
-        <div className="max-w-md rounded-xl border border-primary/20 bg-primary/5 px-6 py-4 text-center">
-          <p className="text-lg font-medium text-foreground">{sentence}</p>
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <p className="text-base font-medium text-foreground">{sentence}</p>
         </div>
       )}
 

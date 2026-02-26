@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+websockets>=14.0,<15
 python-dotenv
 pydantic-settings
 tensorflow
@@ -7,3 +8,5 @@ numpy
 google-genai
 httpx
 python-multipart
+mediapipe==0.10.14
+opencv-python-headless

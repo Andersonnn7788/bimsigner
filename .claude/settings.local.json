@@ -8,7 +8,10 @@
       "Bash(cd:*)",
       "Bash(cd C:\\\\Users\\\\LEGION\\\\Downloads\\\\Developer\\\\bimsigner\\\\training:*)",
       "Bash(npx shadcn@latest add button badge card scroll-area progress separator -y)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(.venv/Scripts/python:*)",
+      "WebSearch",
+      "Bash(.venv/Scripts/pip install:*)"
     ]
   }
 }
