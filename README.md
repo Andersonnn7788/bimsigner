@@ -216,7 +216,7 @@ The sign language avatar is the critical return channel that makes BimSigner a t
 **Why this matters:** Without the avatar, a deaf user could communicate to the officer but receive no response in BIM. The avatar eliminates the asymmetry and closes the loop entirely — both parties communicate in their own language, with AI bridging every step.
 
 ### Check-in Page — AI-Powered Pre-Visit Intent Prediction
-A pre-visit tool that reduces anxiety and wait times by letting visitors(deaf users) register and declare intent before reaching the counter:
+A pre-visit tool that reduces anxiety and wait times by letting visitors(deaf) register and declare intent upon reaching the counter:
 
 - Visitor profile card with Firebase-synced visit history
 - **Gemini 2.5 Flash Lite** analyses visit history and context to predict the most likely purpose of the current visit
