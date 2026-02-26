@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Zap } from "lucide-react";
+import { Check, Zap, Sparkles } from "lucide-react";
 import { REQUIRED_SIGNS } from "@/lib/constants";
 import type { Stage } from "@/lib/stageMachine";
 import type { DetectionResult } from "@/types";
@@ -61,14 +61,19 @@ export default function RecognitionBar({
         <span className="panel-title shrink-0">AI Interpretation</span>
 
         {isTranslating && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="h-3.5 w-3.5 animate-spin rounded-full border border-muted-foreground/30 border-t-primary" />
-            <span className="text-xs">Translating to Malay...</span>
+          <div className="flex flex-col gap-1 w-full max-w-[60%]">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary animate-pulse shrink-0" />
+              <span className="text-[10px] font-medium text-primary">Gemini translating...</span>
+            </div>
+            <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-primary/10">
+              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-[shimmer_1.5s_ease-in-out_infinite]" />
+            </div>
           </div>
         )}
 
         {hasSentence && (
-          <p className="text-sm text-foreground truncate italic">
+          <p className="text-sm text-foreground truncate italic animate-in fade-in duration-500">
             &ldquo;{sentence}&rdquo;
           </p>
         )}

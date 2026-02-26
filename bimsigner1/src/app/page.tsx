@@ -283,6 +283,7 @@ export default function Home() {
             stage={state.stage}
             sentence={state.sentence}
             messages={state.messages}
+            detectedSequence={state.detectedSequence}
           />
         </div>
 
