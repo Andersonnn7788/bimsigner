@@ -33,3 +33,36 @@ export interface DetectionResult {
   confidence: number;
   confidences: number[];
 }
+
+// --- Check-in / Visitor Profile ---
+
+export type VisitOutcome = "COMPLETED" | "IN_PROGRESS" | "INCOMPLETE";
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  ic_number: string;
+  deaf: true;
+  photo_placeholder_initials: string;
+  visit_count: number;
+  registered_since: string; // "YYYY-MM-DD"
+}
+
+export interface VisitRecord {
+  id: string;
+  date: string;
+  department: string;
+  counter: string;
+  purpose: string;
+  outcome: VisitOutcome;
+  notes?: string;
+}
+
+export type ConfidenceLabel = "Very Likely" | "Likely" | "Possible";
+
+export interface IntentPrediction {
+  primary_intent: string;
+  alternatives: [string, string, string];
+  reasoning: string;
+  confidence_label: ConfidenceLabel;
+}

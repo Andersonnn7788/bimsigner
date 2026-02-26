@@ -11,7 +11,8 @@
       "Bash(npm run lint)",
       "Bash(.venv/Scripts/python:*)",
       "WebSearch",
-      "Bash(.venv/Scripts/pip install:*)"
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(ls -la /c/Users/LEGION/Downloads/Developer/bimsigner/bimsigner1/src/hooks/*.ts)"
     ]
   }
 }
