@@ -1,5 +1,5 @@
 import type { Message } from "@/types";
-import { TARGET_SEQUENCE } from "./constants";
+import { REQUIRED_SIGNS } from "./constants";
 
 export type Stage =
   | "SIGNING"
@@ -53,16 +53,16 @@ export function stageReducer(
     case "SIGN_DETECTED": {
       if (state.stage !== "SIGNING") return state;
 
-      const nextIndex = state.detectedSequence.length;
-      if (nextIndex >= TARGET_SEQUENCE.length) return state;
+      // Reject unknown signs
+      if (!REQUIRED_SIGNS.includes(action.sign as (typeof REQUIRED_SIGNS)[number])) return state;
 
-      // Only accept the sign if it matches the next expected sign
-      if (action.sign !== TARGET_SEQUENCE[nextIndex]) return state;
+      // Reject already-detected signs
+      if (state.detectedSequence.includes(action.sign)) return state;
 
       const newSequence = [...state.detectedSequence, action.sign];
 
-      // If sequence is complete, auto-transition to TRANSLATING
-      if (newSequence.length === TARGET_SEQUENCE.length) {
+      // If all required signs collected, auto-transition to TRANSLATING
+      if (newSequence.length === REQUIRED_SIGNS.length) {
         return {
           ...state,
           detectedSequence: newSequence,

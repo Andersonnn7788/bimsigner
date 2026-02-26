@@ -1,128 +1,86 @@
 "use client";
 
-import { Check, Hand } from "lucide-react";
-import DetectionOverlay from "@/components/DetectionOverlay";
-import ConfidenceDisplay from "@/components/ConfidenceDisplay";
-import { TARGET_SEQUENCE } from "@/lib/constants";
+import { Check } from "lucide-react";
+import { REQUIRED_SIGNS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import type { Landmark, DetectionResult } from "@/types";
 
 interface Props {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  isWebcamReady: boolean;
-  webcamError: string | null;
-  isMediaPipeLoading: boolean;
-  isMediaPipeReady: boolean;
-  poseLandmarks?: Landmark[];
-  faceLandmarks?: Landmark[];
-  leftHandLandmarks?: Landmark[];
-  rightHandLandmarks?: Landmark[];
-  detection: DetectionResult | null;
   detectedSequence: string[];
-  onStart: () => void;
 }
 
-export default function SigningStage({
-  videoRef,
-  isWebcamReady,
-  webcamError,
-  isMediaPipeLoading,
-  isMediaPipeReady,
-  poseLandmarks,
-  faceLandmarks,
-  leftHandLandmarks,
-  rightHandLandmarks,
-  detection,
-  detectedSequence,
-  onStart,
-}: Props) {
+export default function SigningStage({ detectedSequence }: Props) {
+  const remaining = REQUIRED_SIGNS.filter((s) => !detectedSequence.includes(s));
+  const isDone = remaining.length === 0;
+
   return (
-    <div className="flex flex-1 flex-col items-center gap-4 overflow-hidden">
-      {/* Webcam */}
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-xl border border-border bg-black shadow-lg aspect-video">
-        <video
-          ref={videoRef}
-          className="h-full w-full object-cover"
-          style={{ transform: "scaleX(-1)" }}
-          playsInline
-          muted
-        />
-        {isWebcamReady && (
-          <div className="absolute inset-0" style={{ transform: "scaleX(-1)" }}>
-            <DetectionOverlay
-              videoRef={videoRef}
-              poseLandmarks={poseLandmarks}
-              faceLandmarks={faceLandmarks}
-              leftHandLandmarks={leftHandLandmarks}
-              rightHandLandmarks={rightHandLandmarks}
-            />
-          </div>
-        )}
+    <div className="flex flex-col gap-5 p-4">
+      <p className="panel-title">Sign Detection</p>
 
-        {/* Overlays */}
-        {!isWebcamReady && !webcamError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            {isMediaPipeLoading ? (
-              <div className="flex flex-col items-center gap-3 text-white">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                <span className="text-sm">Loading MediaPipe...</span>
-              </div>
-            ) : (
-              <button
-                onClick={onStart}
-                className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg transition hover:bg-primary/90"
-              >
-                <Hand className="h-4 w-4" />
-                Start Camera
-              </button>
-            )}
-          </div>
-        )}
-        {webcamError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">
-            <span className="text-sm text-destructive">{webcamError}</span>
-          </div>
-        )}
-
-        {/* Confidence overlay (bottom-right) */}
-        {isMediaPipeReady && (
-          <div className="absolute right-2 bottom-2 w-48">
-            <ConfidenceDisplay detection={detection} />
-          </div>
+      {/* Remaining signs card */}
+      <div className="rounded-xl border border-border bg-secondary/50 px-4 py-4">
+        <p className="text-xs text-muted-foreground mb-1">Signs remaining:</p>
+        {isDone ? (
+          <p className="text-base font-semibold text-emerald-600">All signs detected!</p>
+        ) : (
+          <p className="text-2xl font-bold text-foreground">{remaining.join(", ")}</p>
         )}
       </div>
 
-      {/* Sign progress tracker */}
-      <div className="flex items-center gap-3">
-        {TARGET_SEQUENCE.map((sign, i) => {
-          const isDetected = i < detectedSequence.length;
-          const isCurrent = i === detectedSequence.length;
+      {/* Progress bar */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs text-muted-foreground">
+          Progress: {detectedSequence.length} / {REQUIRED_SIGNS.length} signs
+        </p>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{
+              width: `${(detectedSequence.length / REQUIRED_SIGNS.length) * 100}%`,
+            }}
+          />
+        </div>
+      </div>
 
-          return (
-            <div
-              key={sign}
-              className={cn(
-                "flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-300",
-                isDetected &&
-                  "border-emerald-200 bg-emerald-50 text-emerald-700",
-                isCurrent &&
-                  "border-primary/30 bg-primary/5 text-primary ring-2 ring-primary/20",
-                !isDetected &&
-                  !isCurrent &&
-                  "border-border bg-secondary text-muted-foreground"
-              )}
-            >
-              {isDetected ? (
-                <Check className="h-4 w-4 text-emerald-500" />
-              ) : (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
-                  {i + 1}
-                </span>
-              )}
-              {sign}
-            </div>
-          );
-        })}
+      {/* Detected signs */}
+      {detectedSequence.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-xs text-muted-foreground">Detected so far:</p>
+          <div className="flex flex-wrap gap-2">
+            {REQUIRED_SIGNS.map((sign) => {
+              const isDetected = detectedSequence.includes(sign);
+              return (
+                <div
+                  key={sign}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all duration-300",
+                    isDetected
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-border bg-secondary text-muted-foreground"
+                  )}
+                >
+                  {isDetected ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : (
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-muted-foreground/30" />
+                  )}
+                  {sign}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Tips */}
+      <div className="rounded-xl border border-border bg-card px-4 py-3">
+        <p className="panel-title mb-2">Tips</p>
+        <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <li>• Sign in any order you prefer</li>
+          <li>• Face the camera directly</li>
+          <li>• Keep both hands visible in frame</li>
+          <li>• Hold each sign clearly for 1–2 seconds</li>
+          <li>• Ensure good lighting</li>
+        </ul>
       </div>
     </div>
   );
