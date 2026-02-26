@@ -66,3 +66,27 @@ export interface IntentPrediction {
   reasoning: string;
   confidence_label: ConfidenceLabel;
 }
+
+// --- Deaf-Friendly Locations Directory ---
+
+export type PlaceCategory = "BALAI_POLIS" | "JPJ" | "HOSPITAL";
+export type DeafFeature =
+  | "BIM_SIGNER_KIOSK"
+  | "SIGN_INTERPRETER"
+  | "VISUAL_ALERTS"
+  | "INDUCTION_LOOP"
+  | "VISUAL_QUEUE";
+export type LocationStatus = "ACTIVE" | "COMING_SOON" | "MAINTENANCE";
+
+export interface GovernmentLocation {
+  id: string;
+  name: string;
+  category: PlaceCategory;
+  address: string;
+  city: string;
+  state: string;
+  features: DeafFeature[];
+  status: LocationStatus;
+  coordinates: { lat: number; lng: number }; // reserved for Google Maps
+  hours?: string;
+}

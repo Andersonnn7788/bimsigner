@@ -15,7 +15,7 @@ import AvatarPanel from "@/components/AvatarPanel";
 import OfficerControls from "@/components/OfficerControls";
 import RecognitionBar from "@/components/RecognitionBar";
 import Link from "next/link";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, MapPin } from "lucide-react";
 import type { Landmark } from "@/types";
 
 export default function Home() {
@@ -250,6 +250,13 @@ export default function Home() {
           >
             <ClipboardCheck className="h-3.5 w-3.5" />
             Check-in
+          </Link>
+          <Link
+            href="/locations"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            Locations
           </Link>
           {isMediaPipeLoading && (
             <div className="h-3 w-3 animate-spin rounded-full border border-muted-foreground/30 border-t-muted-foreground" />
