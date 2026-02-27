@@ -48,22 +48,22 @@ Unlike one-way assistive tools, BimSigner completes the **full bidirectional com
 
 ## User Research & Iteration
 
-We conducted interviews and observations with deaf users and government counter officers. Three key insights shaped our entire design:
+We conducted interviews and observations with a BIM sign language interpreter, deaf users and government counter officers. Three key insights shaped our entire design:
 
 ### Insight 1: Government staff have zero BIM training
-**Finding:** Not a single counter officer we interviewed had received any BIM training. They resorted to writing notes, miming, or asking hearing companions to translate — leading to long queues and frustrated users.
+**Finding:** Not a single counter officer we interviewed had received any BIM training. They resorted to writing notes, miming, or asking hearing companions to translate.
 
 **How we iterated:** We designed BimSigner to require **zero BIM knowledge from the officer**. The AI handles all translation automatically, so officers only see natural Malay output on their screen.
 
 ### Insight 2: Deaf users feel unsafe and anxious going to government buildings alone
 **Finding:** Deaf users described feeling deeply vulnerable in public spaces — especially in emergencies or unfamiliar institutions. Without a companion, they had no way to communicate. Several had actively avoided important government appointments because of this anxiety. The situation becomes critical in emergencies where rapid communication is life-saving.
 
-**How we iterated:** We built the **Check-in Page** — a pre-visit tool where users can register their intent and profile before reaching the counter, dramatically reducing uncertainty. We also added the **Locations Directory** with deaf-friendly facility information so users can research accessibility and services before they travel.
+**How we iterated:** We built the **Check-in Page** — a pre-visit tool where users can register their intent and profile upon reaching the counter, dramatically reducing uncertainty. We also added the **Locations Directory** with deaf-friendly facility information so users can research accessibility and services before they travel.
 
 ### Insight 3: Deaf users cannot easily read complex Bahasa Malaysia
-**Finding:** BIM grammar (topic-comment structure, no tense inflection, different word order) is fundamentally different from standard written Bahasa Malaysia. Most deaf users are native BIM speakers for whom written Malay is a second, difficult language. Standard government documents and counter responses are largely inaccessible to them.
+**Finding:** BIM grammar (topic-comment structure, no tense inflection, different word order) and glosses are fundamentally different from standard written Bahasa Malaysia. Most deaf users are native BIM speakers for whom written Malay is a second, difficult language. Standard government documents and counter responses are largely inaccessible to them.
 
-**How we iterated:** We instructed Gemini to translate officer responses into **BIM-friendly simplified text** — short sentences, plain vocabulary, BIM-compatible word order — displayed prominently on the deaf-facing interface. This bridges the written language gap without requiring the officer to know BIM.
+**How we iterated:** We instructed Gemini to translate officer responses into **BIM-friendly simplified text** — short sentences & glosses, plain vocabulary, BIM-compatible word order — displayed prominently on the deaf-facing interface. This bridges the written language gap without requiring the officer to know BIM.
 
 ---
 
