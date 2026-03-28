@@ -18,7 +18,11 @@ from utils import mediapipe_detection, draw_styled_landmarks, extract_keypoints
 model = load_model(MODEL_PATH)
 print(f"Model loaded from: {MODEL_PATH}")
 
-colors = [(128, 128, 128), (245, 117, 16), (117, 245, 16), (16, 117, 245)]
+import colorsys
+colors = [
+    tuple(int(c * 255) for c in colorsys.hsv_to_rgb(i / len(ACTIONS), 0.8, 0.9))
+    for i in range(len(ACTIONS))
+]
 threshold = 0.5
 
 

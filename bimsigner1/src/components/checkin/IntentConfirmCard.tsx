@@ -86,7 +86,7 @@ export default function IntentConfirmCard({
                 <span className="absolute inset-0 rounded-xl animate-ping ring-2 ring-primary/20 pointer-events-none" />
               )}
               <video
-                src="/avatars/avatar.mp4"
+                src="/avatars/avatar2.mp4"
                 autoPlay
                 muted
                 playsInline
@@ -102,7 +102,10 @@ export default function IntentConfirmCard({
             </div>
 
             {/* Intent card */}
-            <div className="w-full rounded-2xl border-2 border-primary/30 bg-primary/5 px-5 py-3 text-center">
+            <div className="w-full rounded-2xl border-2 border-primary/30 bg-primary/5 px-5 py-3 text-center relative">
+              <span className="absolute top-2 right-3 text-xs font-bold text-primary">
+                {Math.round(prediction.primary_probability * 100)}%
+              </span>
               <p className="text-base font-bold text-foreground leading-snug">
                 {prediction.primary_intent}
               </p>
@@ -137,10 +140,10 @@ export default function IntentConfirmCard({
             {prediction.alternatives.map((alt, i) => (
               <button
                 key={i}
-                onClick={() => setSelectedAlt(alt)}
+                onClick={() => setSelectedAlt(alt.intent)}
                 className={cn(
                   "w-full rounded-xl border-2 p-4 text-left flex items-center gap-3 transition-all duration-150",
-                  selectedAlt === alt
+                  selectedAlt === alt.intent
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-background/50 text-foreground hover:border-primary/40 hover:bg-primary/5"
                 )}
@@ -148,14 +151,17 @@ export default function IntentConfirmCard({
                 <span
                   className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold",
-                    selectedAlt === alt
+                    selectedAlt === alt.intent
                       ? "border-primary text-primary"
                       : "border-muted-foreground text-muted-foreground"
                   )}
                 >
                   {i + 1}
                 </span>
-                <span className="text-sm font-medium leading-snug">{alt}</span>
+                <span className="flex-1 text-sm font-medium leading-snug">{alt.intent}</span>
+                <span className="ml-auto text-xs font-bold text-muted-foreground shrink-0">
+                  {Math.round(alt.probability * 100)}%
+                </span>
               </button>
             ))}
 

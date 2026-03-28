@@ -78,10 +78,15 @@ export default function AvatarPanel({
             </div>
           )}
 
-          {/* AVATAR stage: playing */}
-          {isAvatarStage && !isLoading && signs.length > 0 && (
+          {/* Avatar player — single instance across AVATAR→SIGNING transition */}
+          {signs.length > 0 && !isSpeaking && !isTranslating && !(isAvatarStage && isLoading) && (
             <div className="w-full h-full p-3 flex flex-col gap-2">
-              <AvatarPlayer signs={signs} onDone={onDone} />
+              <AvatarPlayer signs={signs} onDone={isAvatarStage ? onDone : undefined} />
+              {!isAvatarStage && sentence && (
+                <p className="text-xs text-center text-muted-foreground italic max-w-[85%] mx-auto">
+                  &ldquo;{sentence}&rdquo;
+                </p>
+              )}
             </div>
           )}
 
@@ -170,8 +175,8 @@ export default function AvatarPanel({
             </div>
           )}
 
-          {/* Idle state — SIGNING and LISTENING only */}
-          {!isAvatarStage && !isSpeaking && !isTranslating && (
+          {/* Idle state — no signs yet */}
+          {!isAvatarStage && !isSpeaking && !isTranslating && signs.length === 0 && (
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
               <div
                 className={cn(

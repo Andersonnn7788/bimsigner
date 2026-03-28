@@ -45,8 +45,8 @@ export default function RecognitionBar({
           ))}
         </div>
 
-        {/* Live detection pulse */}
-        {lastDetection && stage === "SIGNING" && lastDetection.confidence > 0.5 && (
+        {/* Live detection pulse — only show signs in the expected sequence */}
+        {lastDetection && stage === "SIGNING" && lastDetection.confidence > 0.5 && REQUIRED_SIGNS.includes(lastDetection.sign as (typeof REQUIRED_SIGNS)[number]) && (
           <div className="flex items-center gap-1 ml-1 text-[10px] text-muted-foreground">
             <Zap className="h-3 w-3 text-amber-500" />
             <span className="text-amber-600 font-medium">

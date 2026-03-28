@@ -1,0 +1,12 @@
+BIM Sign Language Model — Inference Latency Benchmark
+============================================================
+
+Runs: 100
+Input shape: (1, 30, 1662)
+
+       mean_ms:    75.55 ms
+     median_ms:    71.64 ms
+        p95_ms:   102.05 ms
+        p99_ms:   157.12 ms
+        min_ms:    66.02 ms
+        max_ms:   201.79 ms

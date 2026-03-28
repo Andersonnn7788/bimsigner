@@ -32,6 +32,7 @@ export interface DetectionResult {
   sign: string;
   confidence: number;
   confidences: number[];
+  noHands?: boolean;
 }
 
 // --- Check-in / Visitor Profile ---
@@ -60,9 +61,15 @@ export interface VisitRecord {
 
 export type ConfidenceLabel = "Very Likely" | "Likely" | "Possible";
 
+export interface IntentAlternative {
+  intent: string;
+  probability: number; // 0–1
+}
+
 export interface IntentPrediction {
   primary_intent: string;
-  alternatives: [string, string, string];
+  primary_probability: number; // 0–1
+  alternatives: [IntentAlternative, IntentAlternative, IntentAlternative];
   reasoning: string;
   confidence_label: ConfidenceLabel;
 }

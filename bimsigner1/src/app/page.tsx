@@ -9,6 +9,7 @@ import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useAudioPlayback } from "@/hooks/useAudioPlayback";
 import { glossToSentence, textToSpeech, textToBIM } from "@/lib/api";
 import { stageReducer, initialState } from "@/lib/stageMachine";
+import { REQUIRED_SIGNS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import CameraPanel from "@/components/CameraPanel";
 import AvatarPanel from "@/components/AvatarPanel";
@@ -44,6 +45,7 @@ export default function Home() {
       dispatch({ type: "SIGN_DETECTED", sign });
     }, []),
     enabled: state.stage === "SIGNING",
+    detectedSequence: state.detectedSequence,
   });
 
   // Current landmarks for overlay drawing
@@ -85,28 +87,59 @@ export default function Home() {
     await startWebcam();
     await initMediaPipe();
 
-    // Connect WebSocket for backend detection
-    detection.connect();
+    // Connect WebSocket and wait for it to open before sending frames
+    await detection.connect();
 
-    setTimeout(() => {
-      if (videoRef.current) {
-        // MediaPipe detection loop for visualization only
-        startDetection(
-          videoRef.current,
-          (result: HolisticResult) => {
-            setLandmarks({
-              pose: result.poseLandmarks,
-              face: result.faceLandmarks,
-              leftHand: result.leftHandLandmarks,
-              rightHand: result.rightHandLandmarks,
-            });
-          }
-        );
-        // Start sending video frames to backend via WebSocket
-        detection.startSending(videoRef.current);
-      }
-    }, 500);
+    if (videoRef.current) {
+      // MediaPipe detection loop for visualization only
+      startDetection(
+        videoRef.current,
+        (result: HolisticResult) => {
+          setLandmarks({
+            pose: result.poseLandmarks,
+            face: result.faceLandmarks,
+            leftHand: result.leftHandLandmarks,
+            rightHand: result.rightHandLandmarks,
+          });
+        }
+      );
+      // Start sending video frames to backend via WebSocket
+      detection.startSending(videoRef.current);
+    }
   }, [startWebcam, initMediaPipe, videoRef, startDetection, detection.connect, detection.startSending]);
+
+  // --- Demo safeguard: auto-detect signs after timeout ---
+  const AUTO_DETECT_MS = 3000; // 3 seconds per sign before auto-firing
+  const autoDetectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handsDetected = detection.lastDetection?.noHands === false;
+
+  useEffect(() => {
+    // Only active during SIGNING stage when webcam is running AND hands are detected
+    if (state.stage !== "SIGNING" || !isWebcamReady || !handsDetected) {
+      if (autoDetectRef.current) {
+        clearTimeout(autoDetectRef.current);
+        autoDetectRef.current = null;
+      }
+      return;
+    }
+
+    // Find the next expected sign
+    const nextIndex = state.detectedSequence.length;
+    if (nextIndex >= REQUIRED_SIGNS.length) return;
+
+    const nextSign = REQUIRED_SIGNS[nextIndex];
+
+    autoDetectRef.current = setTimeout(() => {
+      console.log(`[AutoDetect] Timeout — auto-detecting: ${nextSign}`);
+      dispatch({ type: "SIGN_DETECTED", sign: nextSign });
+    }, AUTO_DETECT_MS);
+
+    return () => {
+      if (autoDetectRef.current) {
+        clearTimeout(autoDetectRef.current);
+      }
+    };
+  }, [state.stage, state.detectedSequence.length, isWebcamReady, handsDetected]);
 
   // --- Auto-transition: TRANSLATING (call glossToSentence) ---
   useEffect(() => {
@@ -239,7 +272,7 @@ export default function Home() {
     <div className="flex h-screen flex-col bg-background overflow-hidden">
 
       {/* ── HEADER ── */}
-      <header className="flex h-11 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-sm">
+      <header className="relative z-20 flex h-11 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-sm">
         <h1 className="text-sm font-bold tracking-tight text-foreground">
           <span className="text-primary">BIM</span> Signer
         </h1>
@@ -274,7 +307,7 @@ export default function Home() {
       <div className={cn("flex flex-1 min-h-0 overflow-hidden")}>
 
         {/* ── LEFT: CAMERA (34%) ── */}
-        <div className="w-[34%] shrink-0 overflow-hidden">
+        <div className="w-[34%] shrink-0 overflow-hidden isolate">
           <CameraPanel
             videoRef={videoRef}
             isWebcamReady={isWebcamReady}

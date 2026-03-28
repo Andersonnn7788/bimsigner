@@ -4,7 +4,7 @@ import tensorflow as tf
 from config import settings
 
 # Order must match training/config.py ACTIONS list
-ACTIONS = ["Idle", "Encik", "Tolong", "Saya"]
+ACTIONS = ["Idle", "Hai", "Saya", "Encik", "Puan", "Tolong", "Terima Kasih", "Nama", "Nombor", "Tunggu", "Mana", "Borang", "Renew"]
 
 _model: tf.keras.Model | None = None
 

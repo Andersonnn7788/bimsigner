@@ -133,6 +133,18 @@ export default function CameraPanel({
           </div>
         )}
 
+        {/* No-hands hint — center */}
+        {isWebcamReady && lastDetection?.noHands && (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center z-10 pointer-events-none">
+            <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-black/70 px-3 py-1.5 backdrop-blur-sm">
+              <Hand className="h-4 w-4 text-amber-400" />
+              <span className="text-xs font-medium text-amber-300">
+                Show your hands to sign
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Confidence HUD — bottom-right */}
         {isMediaPipeReady && (
           <div className="absolute bottom-3 right-3 w-44 z-10">
