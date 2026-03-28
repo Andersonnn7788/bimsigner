@@ -163,22 +163,15 @@ API:         Google AI Studio (google-genai SDK)
 
 ### Bidirectional Communication Flow
 
-```
-[Deaf User signs]
-      ↓
- CameraPanel → WebSocket → MediaPipe → LSTM → gloss tokens
-                                                    ↓
-                                             Gemini (gloss→sentence)
-                                                    ↓
-                                         Officer hears (ElevenLabs TTS)
-                                                    ↓
-                                           Officer speaks response
-                                                    ↓
-                                         Gemini (text→BIM gloss sequence)
-                                                    ↓
-                                       Avatar renders signed gestures
-                                                    ↓
-                                           [Deaf User sees BIM]
+```mermaid
+graph LR
+    A[Deaf User Signs] -->|WebSocket| B[MediaPipe\n1662 landmarks]
+    B --> C[LSTM Model\n30-frame window]
+    C -->|gloss tokens| D[Gemini 2.5\nGloss → Sentence]
+    D --> E[Officer Hears\nElevenLabs TTS]
+    E -->|Officer speaks| F[Gemini 2.5\nText → BIM Gloss]
+    F --> G[3D Avatar\nSigns back to user]
+    G -->|loop| A
 ```
 
 ---
