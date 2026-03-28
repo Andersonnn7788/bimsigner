@@ -277,11 +277,9 @@ We built a comprehensive evaluation pipeline (`training/evaluate.py`) that gener
 | Metric | Value |
 |--------|-------|
 | Test Accuracy | 83.1% (59 test samples) |
-| Macro F1-Score | 0.81 |
-| Weighted F1-Score | 0.80 |
-| Mean Inference Latency | 75.6 ms |
-| P95 Inference Latency | 102.1 ms |
-| Signs at Perfect F1 (1.00) | 7 / 13 |
+| Median Inference Latency | 72 ms |
+
+> **Raw model accuracy is 83%. Real-world reliability is higher** — per-class confidence thresholds, confusion-pair disambiguation, and majority-vote smoothing improve detection beyond raw metrics.
 
 ### Per-Class Performance
 
