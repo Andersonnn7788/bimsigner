@@ -1,6 +1,6 @@
 "use client";
 
-import { CONFIDENCE_THRESHOLD } from "@/lib/constants";
+import { CONFIDENCE_THRESHOLD, REQUIRED_SIGNS } from "@/lib/constants";
 import type { DetectionResult } from "@/types";
 
 interface Props {
@@ -9,7 +9,10 @@ interface Props {
 
 export default function ConfidenceDisplay({ detection }: Props) {
   const confidence = detection?.confidence ?? 0;
-  const aboveThreshold = confidence >= CONFIDENCE_THRESHOLD;
+  const isRelevantSign = detection?.sign
+    ? REQUIRED_SIGNS.includes(detection.sign as (typeof REQUIRED_SIGNS)[number])
+    : false;
+  const aboveThreshold = confidence >= CONFIDENCE_THRESHOLD && isRelevantSign;
   const barWidth = `${(confidence * 100).toFixed(1)}%`;
   const barColor = aboveThreshold
     ? "#00ff88"

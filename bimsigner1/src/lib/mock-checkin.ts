@@ -67,10 +67,11 @@ export const MOCK_HISTORY: VisitRecord[] = [
 
 export const MOCK_INTENT: IntentPrediction = {
   primary_intent: "Collect New IC After Application Was Approved",
+  primary_probability: 0.82,
   alternatives: [
-    "Check IC Application Processing Status",
-    "Update Personal Information in NRD Records",
-    "Enquiry About Family Member Birth Document",
+    { intent: "Check IC Application Processing Status", probability: 0.10 },
+    { intent: "Update Personal Information in NRD Records", probability: 0.05 },
+    { intent: "Enquiry About Family Member Birth Document", probability: 0.03 },
   ],
   reasoning:
     "New IC application was submitted in Feb 2026 and is currently in progress. Visitor likely returning to collect the completed document.",

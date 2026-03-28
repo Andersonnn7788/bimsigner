@@ -11,6 +11,7 @@ interface Props {
 export default function AvatarPlayer({ signs, onDone }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
   const lastSignsRef = useRef<string | null>(null);
 
   // Derive a key from signs to detect new sign sets
@@ -27,6 +28,7 @@ export default function AvatarPlayer({ signs, onDone }: Props) {
 
       lastSignsRef.current = signsKey;
       setIsPlaying(true);
+      setHasPlayed(true);
 
       video.src = `/avatars/avatar.mp4`;
       video.load();
@@ -41,7 +43,6 @@ export default function AvatarPlayer({ signs, onDone }: Props) {
 
   const handleEnded = useCallback(() => {
     setIsPlaying(false);
-    lastSignsRef.current = null;
     onDone?.();
   }, [onDone]);
 
@@ -55,15 +56,15 @@ export default function AvatarPlayer({ signs, onDone }: Props) {
           onEnded={handleEnded}
           onError={handleEnded}
         />
-        {!isPlaying && (
+        {!isPlaying && !hasPlayed && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
             Avatar signs will play here
           </div>
         )}
       </div>
-      {isPlaying && signs.length > 0 && (
+      {signs.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-          Signing:{" "}
+          {isPlaying ? "Signing:" : "Signed:"}{" "}
           {signs.map((sign, i) => (
             <Badge
               key={`${sign}-${i}`}

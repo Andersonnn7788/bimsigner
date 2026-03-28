@@ -176,12 +176,11 @@ export function stageReducer(
       return {
         ...state,
         isPlaying: false,
-        // Reset for next cycle but keep messages
+        // Reset for next cycle but keep messages, sentence & avatarSigns
+        // (they stay visible until overwritten by the next cycle)
         stage: "SIGNING",
         detectedSequence: [],
-        sentence: "",
         staffTranscript: "",
-        avatarSigns: [],
         error: null,
       };
 
@@ -192,12 +191,10 @@ export function stageReducer(
         isLoading: false,
         isPlaying: false,
         error: action.error,
-        // Reset to signing even on error
+        // Reset to signing even on error, keep sentence & avatarSigns visible
         stage: "SIGNING",
         detectedSequence: [],
-        sentence: "",
         staffTranscript: "",
-        avatarSigns: [],
       };
 
     case "RESET":

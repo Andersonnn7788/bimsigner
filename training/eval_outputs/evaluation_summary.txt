@@ -1,0 +1,47 @@
+============================================================
+  BIM Sign Language Model — Evaluation Summary
+============================================================
+
+Number of classes: 13
+Actions: [np.str_('Idle'), np.str_('Hai'), np.str_('Saya'), np.str_('Encik'), np.str_('Puan'), np.str_('Tolong'), np.str_('Terima Kasih'), np.str_('Nama'), np.str_('Nombor'), np.str_('Tunggu'), np.str_('Mana'), np.str_('Borang'), np.str_('Renew')]
+
+--- Test Set Performance ---
+  Test Loss:     0.3478
+  Test Accuracy: 0.8305 (83.1%)
+
+--- Per-Class Metrics ---
+              precision    recall  f1-score   support
+
+        Idle       1.00      1.00      1.00         4
+         Hai       0.56      1.00      0.71         5
+        Saya       1.00      1.00      1.00         4
+       Encik       0.50      0.40      0.44         5
+        Puan       0.57      0.80      0.67         5
+      Tolong       1.00      0.75      0.86         4
+Terima Kasih       1.00      1.00      1.00         5
+        Nama       1.00      1.00      1.00         5
+      Nombor       1.00      1.00      1.00         4
+      Tunggu       1.00      1.00      1.00         4
+        Mana       0.00      0.00      0.00         5
+      Borang       1.00      1.00      1.00         4
+       Renew       0.83      1.00      0.91         5
+
+    accuracy                           0.83        59
+   macro avg       0.80      0.84      0.81        59
+weighted avg       0.78      0.83      0.80        59
+
+--- Inference Latency ---
+       mean_ms:    75.55 ms
+     median_ms:    71.64 ms
+        p95_ms:   102.05 ms
+        p99_ms:   157.12 ms
+        min_ms:    66.02 ms
+        max_ms:   201.79 ms
+
+--- Artifacts ---
+  confusion_matrix.png            Confusion matrix (counts)
+  confusion_matrix_normalized.png  Confusion matrix (recall %)
+  training_curves.png             Loss & accuracy over epochs
+  classification_report.txt/csv   Per-class P/R/F1
+  inference_latency.txt           Latency benchmark
+  model_summary.txt               Architecture & params
