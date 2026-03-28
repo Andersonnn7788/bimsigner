@@ -154,12 +154,12 @@ API:         Google AI Studio (google-genai SDK)
 | **Next.js Frontend** | 3-panel UI: CameraPanel (sign input), AvatarPanel (BIM gesture output/return channel), OfficerControls; Google Maps; WebSocket client; check-in flow |
 | **FastAPI Backend** | WebSocket sign detection server; REST API orchestration; MediaPipe + LSTM + Gemini + TTS coordination |
 | **MediaPipe Service** | Per-frame holistic landmark extraction → 1662-dim feature vectors; CPU work offloaded via `asyncio.to_thread()` |
-| **LSTM Model Service** | 30-frame sliding window inference; temporal smoothing (5 consecutive matches); confidence thresholding at 0.7 |
+| **LSTM Model Service** | 30-frame sliding window inference; per-class confidence thresholds; majority-vote temporal smoothing; confusion-pair disambiguation (Encik/Puan, Tolong/Renew) |
 | **Gemini Service** | BIM gloss-to-sentence; Malay-to-BIM gloss sequence generation (drives avatar); check-in intent prediction with confidence scoring |
 | **Avatar Renderer** | Receives BIM gloss sequence from Gemini; renders signed gesture animations in the AvatarPanel; overlays live sign badges per active gloss |
 | **TTS Service** | Malay text-to-speech for officer-facing audio output (ElevenLabs multilingual v2) |
 | **Firebase Firestore** | Visitor profile storage; visit history records; real-time check-in state |
-| **Training Pipeline** | Webcam data collection → MediaPipe feature extraction → LSTM training (EarlyStopping) → model export |
+| **Training Pipeline** | Webcam data collection → MediaPipe feature extraction → LSTM training (EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard) → model export → evaluation (confusion matrix, per-class metrics, latency benchmark) |
 
 ### Bidirectional Communication Flow
 
@@ -195,7 +195,7 @@ The primary interface deployed at government service counters. Three-panel layou
 **Full Communication Cycle (SIGNING → TRANSLATING → SPEAKING → LISTENING → AVATAR → SIGNING):**
 1. Webcam frames are streamed via WebSocket to the FastAPI backend
 2. MediaPipe extracts 1662 holistic landmarks per frame (pose + face + hands)
-3. 30-frame sequences are fed into the LSTM model; temporal smoothing requires 5 consecutive identical predictions before confirming a sign
+3. 30-frame sequences are fed into the LSTM model; majority-vote temporal smoothing with per-class confidence thresholds and confusion-pair disambiguation confirms each sign
 4. Confirmed gloss tokens are sent to Gemini, which reconstructs a grammatically correct Malay sentence
 5. ElevenLabs TTS plays the sentence aloud for the officer
 6. Officer speaks their response; speech is transcribed in real time
@@ -260,14 +260,82 @@ The `ACTIONS` class label list is also hardcoded identically in `training/config
 
 **Our solution:** We engineered a Gemini system prompt that encodes BIM linguistic rules explicitly, including honorific insertion (`Encik`/`Puan`), function word recovery (`tolong`, `boleh`), and topic-first ordering. The low temperature (0.3) ensures deterministic, professional output on every call.
 
+### Challenge 4: Accurate Detection Despite Confused Sign Pairs
+
+**The problem:** Our evaluation pipeline revealed that visually similar sign pairs (Encik/Puan, Tolong/Renew) confused the LSTM model, and several signs required different confidence thresholds to avoid false positives. Naive temporal smoothing with a single global threshold produced unreliable detections for these edge cases.
+
+**Our solution:** We built a multi-layered post-processing pipeline in the WebSocket detection server (`ws_detect.py`):
+- **Per-class confidence thresholds** — each of the 13 signs has a tuned minimum confidence floor derived from evaluation metrics, replacing the single global threshold
+- **Confusion-pair disambiguation** — when the model's top-2 predictions are a known confused pair (e.g., Encik vs Puan), additional score-gap and ratio checks disambiguate the prediction
+- **Majority-vote smoothing windows** — instead of requiring N consecutive identical predictions, a sliding window tallies votes and requires a supermajority, tolerating occasional frame-level noise
+- **Sequence-context boosting** — expected next signs in the conversation flow receive a small confidence boost, improving accuracy in real dialogue
+- **Early prediction** — inference begins from 15 frames (zero-padded to 30) for faster response, with full 30-frame confirmation following
+
+**Outcome:** This train → evaluate → engineer iteration loop significantly improved real-world detection reliability beyond raw model accuracy, demonstrating that post-processing intelligence is as critical as model training.
+
+---
+
+## Model Evaluation
+
+We built a comprehensive evaluation pipeline (`training/evaluate.py`) that generates publication-quality metrics and artifacts for every trained model.
+
+### Results Summary
+
+| Metric | Value |
+|--------|-------|
+| Test Accuracy | 83.1% (59 test samples) |
+| Macro F1-Score | 0.81 |
+| Weighted F1-Score | 0.80 |
+| Mean Inference Latency | 75.6 ms |
+| P95 Inference Latency | 102.1 ms |
+| Signs at Perfect F1 (1.00) | 7 / 13 |
+
+### Per-Class Performance
+
+| Sign | Precision | Recall | F1-Score | Status |
+|------|-----------|--------|----------|--------|
+| Idle | 1.00 | 1.00 | 1.00 | Perfect |
+| Hai | 0.56 | 1.00 | 0.71 | High recall, precision improving |
+| Saya | 1.00 | 1.00 | 1.00 | Perfect |
+| Encik | 0.50 | 0.40 | 0.44 | Confused with Puan — mitigated by disambiguation |
+| Puan | 0.57 | 0.80 | 0.67 | Confused with Encik — mitigated by disambiguation |
+| Tolong | 1.00 | 0.75 | 0.86 | Strong |
+| Terima Kasih | 1.00 | 1.00 | 1.00 | Perfect |
+| Nama | 1.00 | 1.00 | 1.00 | Perfect |
+| Nombor | 1.00 | 1.00 | 1.00 | Perfect |
+| Tunggu | 1.00 | 1.00 | 1.00 | Perfect |
+| Mana | 0.00 | 0.00 | 0.00 | Data-starved — priority for Phase 2 |
+| Borang | 1.00 | 1.00 | 1.00 | Perfect |
+| Renew | 0.83 | 1.00 | 0.91 | Strong |
+
+**Key findings:** 7 of 13 signs achieve perfect classification. The Encik/Puan confusion pair is addressed by the disambiguation logic in Challenge 4. Mana requires additional training data — a priority for Phase 2 vocabulary expansion.
+
+### Evaluation Artifacts
+
+The evaluation pipeline generates the following artifacts in `training/eval_outputs/`:
+
+| Artifact | Description |
+|----------|-------------|
+| `confusion_matrix.png` | Confusion matrix with raw counts |
+| `confusion_matrix_normalized.png` | Confusion matrix normalized by recall (%) |
+| `training_curves.png` | Loss and accuracy curves over epochs |
+| `classification_report.txt` | Per-class precision, recall, and F1-score |
+| `classification_report.csv` | Machine-readable version of the classification report |
+| `evaluation_summary.txt` | Complete evaluation summary with all metrics |
+| `inference_latency.txt` | Latency benchmark (mean, median, P95, P99) |
+| `model_summary.txt` | Keras model architecture and parameter count |
+| `training_history.json` | Full training history for curve reproduction |
+
 ---
 
 ## Success Metrics
 
 | Metric | Current | Target (Phase 2) |
 |--------|---------|-----------------|
-| Sign recognition accuracy | ~85% | >90% |
-| BIM signs in vocabulary | 10+ common signs | 50+ signs |
+| Sign recognition accuracy | 83% (59 test samples) | >90% |
+| BIM signs in vocabulary | 13 signs (including Idle) | 50+ signs |
+| Signs at perfect F1 (1.00) | 7 / 13 | 40+ / 50+ |
+| Inference latency (mean) | 75.6 ms | <50 ms |
 | Avg. transaction time | Baseline established | <5 min (vs. 20+ min today) |
 | Government institution types supported | 3 (Police, JPJ, Hospital) | 10 |
 | Active Firebase user profiles | Deployed | Multi-institution scale |
@@ -278,7 +346,7 @@ The `ACTIONS` class label list is also hardcoded identically in `training/config
 ## Roadmap
 
 ### Phase 1 — Core Communication Bridge (Current)
-- [x] Real-time BIM sign detection (10+ common signs)
+- [x] Real-time BIM sign detection (13 BIM signs)
 - [x] Gemini-powered gloss-to-sentence translation
 - [x] Officer TTS audio output (Malay)
 - [x] 3D BIM sign language avatar (return channel for officer→deaf communication)
@@ -286,6 +354,8 @@ The `ACTIONS` class label list is also hardcoded identically in `training/config
 - [x] Gemini-powered check-in intent prediction
 - [x] Firebase profile & visit history storage
 - [x] Google Maps deaf-accessible locations directory
+- [x] Comprehensive model evaluation pipeline (confusion matrix, per-class metrics, latency benchmark)
+- [x] Advanced detection post-processing (per-class thresholds, confusion-pair disambiguation, majority-vote smoothing)
 
 ### Phase 2 — Expanded Vocabulary & Reach
 - [ ] Expand LSTM vocabulary to 50+ BIM signs
@@ -312,7 +382,8 @@ The `ACTIONS` class label list is also hardcoded identically in `training/config
 | Maps (Google) | Google Maps API (`@vis.gl/react-google-maps`) |
 | Database (Google) | Firebase Firestore |
 | TTS | ElevenLabs `eleven_multilingual_v2` |
-| Training | MediaPipe + NumPy + Keras EarlyStopping |
+| Training | MediaPipe + NumPy + Keras (EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, TensorBoard) |
+| Evaluation | scikit-learn + seaborn + matplotlib |
 
 ---
 
@@ -348,6 +419,7 @@ uvicorn main:app --reload --ws websockets-sansio
 cd training
 python collect_data.py   # Collect BIM sign data via webcam
 python train_model.py    # Train LSTM → models/action.h5
+python evaluate.py       # Evaluate model → eval_outputs/ (confusion matrix, metrics, latency)
 ```
 
 ---
@@ -363,16 +435,23 @@ bimsigner/
 │       │   ├── checkin/page.tsx       # AI-powered check-in
 │       │   └── locations/page.tsx     # Google Maps directory
 │       ├── components/                # CameraPanel, AvatarPanel, OfficerControls, etc.
-│       ├── lib/                       # API client, stage machine, Firebase helpers
+│       │   ├── checkin/               # ProfilePanel, HistoryPanel, IntentConfirmCard
+│       │   └── locations/             # LocationListPanel, MapPanel
+│       ├── hooks/                     # useDetectionSocket, useMediaPipe, useSpeechRecognition, etc.
+│       ├── lib/                       # API client, stage machine, constants, mock data
 │       └── types/                     # TypeScript interfaces
 ├── backend/                  # FastAPI Python backend
 │   ├── routers/               # predict, gemini, tts, ws_detect
 │   ├── services/              # mediapipe_service, model_service, gemini_service, tts_service
 │   └── main.py
-├── training/                 # LSTM training pipeline
+├── training/                 # LSTM training & evaluation pipeline
 │   ├── collect_data.py        # Webcam data collection
-│   ├── train_model.py         # LSTM training with EarlyStopping
-│   └── config.py              # ACTIONS list — must match backend exactly
+│   ├── train_model.py         # LSTM training with callbacks
+│   ├── evaluate.py            # Model evaluation → eval_outputs/
+│   ├── test_realtime.py       # Local webcam inference test
+│   ├── utils.py               # MediaPipe helpers & landmark utilities
+│   ├── config.py              # ACTIONS list — must match backend exactly
+│   └── eval_outputs/          # Confusion matrices, metrics, latency benchmarks
 └── models/                   # Trained .h5 model artifacts
 ```
 
